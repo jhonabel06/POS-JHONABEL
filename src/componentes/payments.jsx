@@ -9,19 +9,19 @@ const Payments = () => {
   ];
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="payment-container">
+      <div className="payment-header">
         <h2>Pagos</h2>
-        <button style={styles.newPaymentButton}>+ Registrar Pago</button>
+        <button className="payments-new-payment-button">+ Registrar Pago</button>
       </div>
       
-      <div style={styles.content}>
-        <div style={styles.paymentList}>
+      <div className="payments-content">
+        <div className="payments-payment-list">
           {payments.map(payment => (
             <div 
               key={payment.id} 
               onClick={() => setSelectedPayment(payment)}
-              style={styles.paymentItem}
+              className="payments-payment-item"
             >
               <span>{payment.date}</span>
               <span>${payment.amount}</span>
@@ -33,7 +33,7 @@ const Payments = () => {
         </div>
         
         {selectedPayment && (
-          <div style={styles.paymentDetails}>
+          <div className="payments-payment-details">
             <h3>Detalles del Pago #{selectedPayment.id}</h3>
             <p>Método: {selectedPayment.method}</p>
             <p>Total: ${selectedPayment.amount}</p>
@@ -43,23 +43,6 @@ const Payments = () => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: { padding: '20px' },
-  header: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px' },
-  newPaymentButton: { backgroundColor: '#28a745', color: 'white', padding: '10px' },
-  content: { display: 'flex', gap: '30px' },
-  paymentList: { flex: 1 },
-  paymentItem: { 
-    display: 'flex', 
-    justifyContent: 'space-between',
-    border: '1px solid #ddd', 
-    padding: '10px', 
-    marginBottom: '10px',
-    cursor: 'pointer'
-  },
-  paymentDetails: { flex: 1, border: '1px solid #ddd', padding: '20px' }
 };
 
 export default Payments;

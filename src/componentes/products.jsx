@@ -10,10 +10,10 @@ const Products = () => {
   ];
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
+    <div className="products-container">
+      <div className="product-header">
         <h2>Productos</h2>
-        <div style={styles.filters}>
+        <div className= "product-table">
           <input
             type="text"
             placeholder="Buscar productos..."
@@ -30,7 +30,7 @@ const Products = () => {
         </div>
       </div>
       
-      <table style={styles.table}>
+      <table className= "product-table">
         <thead>
           <tr>
             <th>Nombre</th>
@@ -57,13 +57,6 @@ const Products = () => {
       </table>
     </div>
   );
-};
-
-const styles = {
-  container: { padding: '20px' },
-  header: { marginBottom: '20px' },
-  filters: { display: 'flex', gap: '20px', margin: '10px 0' },
-  table: { width: '100%', borderCollapse: 'collapse' },
 };
 
 export default Products;
