@@ -59,10 +59,10 @@ const Login = () => {
         <Link to="/recover-password">¿Olvidaste tu contraseña?</Link>
         <Link to="/register">Registrarse</Link>
       </div>
-      <div className="login-social-login">
+      {/* <div className="login-social-login">
         <button className="login-social-button">Google</button>
         <button className="login-social-button">Facebook</button>
-      </div>
+      </div> */}
     </div>
   );
 };
