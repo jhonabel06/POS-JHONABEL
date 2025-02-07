@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 
-const OrdersComponent = ({ orders }) => {
+const OrdersComponent = ({ orders,onCompleteOrder }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -41,9 +41,18 @@ const OrdersComponent = ({ orders }) => {
                 </h2>
                 <p className="text-sm text-gray-500">{formatDate(orden.fecha_creacion)}</p>
               </div>
+
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(orden.estado)}`}>
                 {orden.estado.replace('_', ' ').toUpperCase()}
               </span>
+              {orden.estado === 'en_proceso' && (
+                  <button
+                    onClick={() => onCompleteOrder(orden.orden_id)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    Completar
+                  </button>
+                  )}
             </div>
             <div className="border-t border-b border-gray-200 py-4">
               {orden.detalles.map((detalle) => (
@@ -69,6 +78,7 @@ const OrdersComponent = ({ orders }) => {
 
 OrdersComponent.propTypes = {
   orders: PropTypes.array.isRequired,
+  onCompleteOrder: PropTypes.func.isRequired, // Prop añadida
 };
 
 export default OrdersComponent;

@@ -1,8 +1,9 @@
 import OrdersComponent from './ordersComponent';
+import { useState } from 'react'; // Importar useState
 
 const Orders = () => {
-
-  const orders = [{
+  // Convertir las órdenes a estado para poder modificarlas
+  const [orders, setOrders] = useState([{
     orden_id: 1,
     estado: 'en_proceso',
     total: 45.50,
@@ -22,7 +23,7 @@ const Orders = () => {
     }]
   },
   {
-    orden_id: 1,
+    orden_id: 2, // Cambiado a 2 para ID único
     estado: 'en_proceso',
     total: 45.50,
     fecha_creacion: '2024-02-20T15:30:00Z',
@@ -39,15 +40,27 @@ const Orders = () => {
         precio: 10.00
       }
     }]
-  }
-];
-      // Aquí iría tu lógica para obtener las órdenes (useState + useEffect o API fetch)
-    // const orders = []; // Tus órdenes reales vendrían aquí
-    
-    return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <OrdersComponent orders={orders} />
-      </div>
+  }]);
+
+  // Función para marcar una orden como completada
+  const handleCompleteOrder = (orderId) => {
+    setOrders(prevOrders => 
+      prevOrders.map(order => 
+        order.orden_id === orderId 
+          ? { ...order, estado: 'completado' } 
+          : order
+      )
     );
   };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <OrdersComponent 
+        orders={orders} 
+        onCompleteOrder={handleCompleteOrder} // Pasamos la función como prop
+      />
+    </div>
+  );
+};
+
 export default Orders;

@@ -26,7 +26,8 @@ const Login = () => {
       console.log('Usuario autenticado:', data);
       window.location.href = '/dashboard';
     } catch (error) {
-      setError(error.message || 'Error al iniciar sesión');
+      //setError(error.message || 'Error al iniciar sesión');
+      setError('Error al iniciar sesión');
       console.error('Error:', error.message);
     } finally {
       setLoading(false);
