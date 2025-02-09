@@ -1,12 +1,12 @@
 /* App.css */
 /* App.css */
-:root {
-  --primary-color: #007bff;    /* Color principal (azul) */
-  --success-color: #28a745;    /* Color de éxito (verde) */
-  --spacing-md: 20px;          /* Espaciado estándar */
-}
+/* :root {
+  --primary-color: #007bff;   
+  --success-color: #28a745;    
+  --spacing-md: 20px;          
+} */
 /***** Login Component *****/
-.login-container {
+/* .login-container {
   text-align: center;
   padding: 20px;
   border-radius: 10%;
@@ -48,10 +48,10 @@
 .login-social-button {
   margin: 5px;
   padding: 10px;
-}
+} */
 
 /***** Dashboard Component *****/
-.dashboard-container {
+/* .dashboard-container {
   display: flex;
 }
 
@@ -93,10 +93,10 @@
   background-color: #28a745;
   color: white;
   padding: 10px 20px;
-}
+} */
 
 /***** Orders Component *****/
-.orders-container {
+/* .orders-container {
   padding: 20px;
 }
 
@@ -138,9 +138,9 @@
   gap: 10px;
   margin-top: 20px;
 }
-
+ */
 /***** Payments Component *****/
-.payments-container {
+/* .payments-container {
   padding: 20px;
 }
 
@@ -178,10 +178,10 @@
   flex: 1;
   border: 1px solid #ddd;
   padding: 20px;
-}
+} */
 
 /***** Products Component *****/
-.products-container {
+/* .products-container {
   padding: 20px;
 }
 
@@ -198,7 +198,4 @@
 .products-table {
   width: 100%;
   border-collapse: collapse;
-}
-
-
-
+} */

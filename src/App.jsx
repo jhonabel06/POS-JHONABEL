@@ -7,6 +7,7 @@ import Payments from './componentes/payments';
 
 // App.js
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import RegistrarUsuario from './componentes/registrarUsuario';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/orders" element={<Orders />} />
         <Route path="/products" element={<Products />} />
         <Route path="/payments" element={<Payments />} />
+        <Route path="/register" element={<RegistrarUsuario/>} />
         
       </Routes>
     </BrowserRouter>
