@@ -68,7 +68,7 @@ const RegistrarUsuario= () => {
       if (error) throw error;
 
       setSuccessMessage('¡Registro exitoso! Por favor verifica tu email.');
-      setTimeout(() => navigate('/login'), 3000);
+      setTimeout(() => navigate('/'), 5173);
       
     } catch (error) {
       setErrors({
@@ -185,7 +185,7 @@ const RegistrarUsuario= () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ¿Ya tienes cuenta?{' '}
-              <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <a href="/" className="font-medium text-blue-600 hover:text-blue-500">
                 Inicia sesión
               </a>
             </p>
