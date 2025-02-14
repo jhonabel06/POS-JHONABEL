@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { PencilIcon, TrashIcon, PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+
+
+
 
 const Products = () => {
   const [products, setProducts] = useState([
@@ -11,6 +14,7 @@ const Products = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', price: '', stock: '', category: '' });
   const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const validateForm = () => {
     const newErrors = {};
@@ -20,6 +24,10 @@ const Products = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,17 +76,28 @@ const Products = () => {
     setProducts(prev => prev.filter(product => product.id !== id));
   };
 
+
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Productos</h2>
-        <button
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Nuevo Producto
-        </button>
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            placeholder="Buscar por descripción"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="px-4 py-2 border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleCreate}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Nuevo Producto
+          </button>
+        </div>
       </div>
 
       {/* Tabla de productos */}
@@ -94,7 +113,7 @@ const Products = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map(product => (
+            {filteredProducts.map(product => (
               <tr key={product.id}>
                 <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap">${product.price.toFixed(2)}</td>
