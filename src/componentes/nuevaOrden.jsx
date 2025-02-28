@@ -9,11 +9,36 @@ export default function NuevaOrden() {
     total: 0.00
   });
 
-  const [items, setItems] = useState([{ producto_id: null, cantidad: 1, precio_unitario: 0, subtotal: 0 }]);
+  const [items, setItems] = useState([]);
   const [mesasDisponibles, setMesasDisponibles] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  
+
+  const filteredProducts = productos.filter(producto => 
+    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddProduct = () => {
+    if (!selectedProduct || quantity < 1) return;
+    
+    const newItem = {
+      producto_id: selectedProduct.producto_id,
+      cantidad: quantity,
+      precio_unitario: selectedProduct.precio,
+      subtotal: quantity * selectedProduct.precio
+    };
+
+    setItems([...items, newItem]);
+    setShowProductSelector(false);
+    setSelectedProduct(null);
+    setQuantity(1);
+  };
 
   // Cargar mesas y productos al montar el componente
   useEffect(() => {
@@ -40,9 +65,9 @@ export default function NuevaOrden() {
       ...item,
       subtotal: item.cantidad * item.precio_unitario
     }));
-    
+
     const nuevoTotal = nuevosItems.reduce((sum, item) => sum + item.subtotal, 0);
-    
+
     setItems(nuevosItems);
     setOrden(prev => ({ ...prev, total: nuevoTotal }));
   }, [items]);
@@ -52,29 +77,6 @@ export default function NuevaOrden() {
       ...orden,
       [e.target.name]: e.target.value
     });
-  };
-
-  const handleItemChange = async (index, e) => {
-    const { name, value } = e.target;
-    const newItems = [...items];
-    
-    if (name === 'producto_id') {
-      const producto = productos.find(p => p.producto_id === parseInt(value));
-      newItems[index] = {
-        ...newItems[index],
-        producto_id: value,
-        precio_unitario: producto?.precio || 0,
-        stock_disponible: producto?.stock || 0
-      };
-    } else {
-      newItems[index][name] = name === 'cantidad' ? parseInt(value) : parseFloat(value);
-    }
-
-    setItems(newItems);
-  };
-
-  const addItem = () => {
-    setItems([...items, { producto_id: null, cantidad: 1, precio_unitario: 0, subtotal: 0 }]);
   };
 
   const removeItem = (index) => {
@@ -136,12 +138,12 @@ export default function NuevaOrden() {
       setLoading(false);
     }
   };
-
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 relative">
       <h1 className="text-2xl font-bold mb-6">Nueva Orden</h1>
       
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Sección de información de la orden */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block mb-2">Mesa:</label>
@@ -160,7 +162,7 @@ export default function NuevaOrden() {
               ))}
             </select>
           </div>
-
+  
           <div>
             <label className="block mb-2">Estado:</label>
             <select
@@ -176,106 +178,207 @@ export default function NuevaOrden() {
             </select>
           </div>
         </div>
-
+  
+        {/* Sección de productos */}
         <div className="border-t pt-4">
-          <h2 className="text-xl font-semibold mb-4">Ítems de la Orden</h2>
-          
-          {items.map((item, index) => {
-            const producto = productos.find(p => p.producto_id === item.producto_id);
-            
-            return (
-              <div key={index} className="border p-4 rounded mb-4">
-                <div className="grid grid-cols-4 gap-4 items-end">
-                  <div>
-                    <label className="block mb-2">Producto:</label>
-                    <select
-                      name="producto_id"
-                      value={item.producto_id || ''}
-                      onChange={(e) => handleItemChange(index, e)}
-                      className="w-full p-2 border rounded"
-                      required
-                    >
-                      <option value="">Seleccionar producto</option>
-                      {productos.map(producto => (
-                        <option key={producto.producto_id} value={producto.producto_id}>
-                          {producto.nombre} (Stock: {producto.stock})
-                        </option>
-                      ))}
-                    </select>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Productos Seleccionados</h2>
+            <button
+              type="button"
+              onClick={() => setShowProductSelector(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Agregar Productos
+            </button>
+          </div>
+  
+          {/* Lista de productos agregados */}
+          {items.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              No hay productos agregados
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {items.map((item, index) => {
+                const producto = productos.find(p => p.producto_id === item.producto_id);
+                
+                return (
+                  <div key={index} className="border p-4 rounded-lg bg-white shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-1">
+                        {producto?.imagen_url ? (
+                          <img 
+                            src={producto.imagen_url} 
+                            alt={producto.nombre}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                        
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{producto?.nombre || 'Producto no disponible'}</h4>
+                          <div className="flex gap-4 text-sm text-gray-600">
+                            <span>Cantidad: {item.cantidad}</span>
+                            <span>Precio unitario: ${item.precio_unitario.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right min-w-[120px]">
+                        <p className="font-semibold">${item.subtotal.toFixed(2)}</p>
+                        <button
+                          onClick={() => removeItem(index)}
+                          className="text-red-500 hover:text-red-700 text-sm mt-1"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  <div>
-                    <label className="block mb-2">Cantidad:</label>
-                    <input
-                      type="number"
-                      name="cantidad"
-                      value={item.cantidad}
-                      onChange={(e) => handleItemChange(index, e)}
-                      className="w-full p-2 border rounded"
-                      min="1"
-                      max={producto?.stock || 1}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2">Precio Unitario:</label>
-                    <input
-                      type="number"
-                      value={item.precio_unitario}
-                      className="w-full p-2 border rounded bg-gray-100"
-                      readOnly
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2">Subtotal:</label>
-                    <input
-                      type="number"
-                      value={item.subtotal.toFixed(2)}
-                      className="w-full p-2 border rounded bg-gray-100"
-                      readOnly
-                    />
-                  </div>
-                </div>
-
-                {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="mt-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
-                  >
-                    Eliminar Ítem
-                  </button>
-                )}
-              </div>
-            )}
+                );
+              })}
+            </div>
           )}
-
+        </div>
+  
+        {/* Total y botón de enviar */}
+        <div className="border-t pt-4">
+          <div className="flex justify-between items-center">
+            <span className="text-xl font-bold">Total:</span>
+            <span className="text-xl font-bold">${orden.total.toFixed(2)}</span>
+          </div>
+          
+          {error && <div className="text-red-500 p-3 bg-red-100 rounded mt-4">{error}</div>}
+          
           <button
-            type="button"
-            onClick={addItem}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-500 text-white py-3 rounded mt-4 hover:bg-green-600 disabled:bg-gray-400 transition-colors"
           >
-            Agregar Ítem
+            {loading ? 'Procesando orden...' : 'Confirmar Orden'}
           </button>
         </div>
-
-        <div className="text-xl font-bold border-t pt-4">
-          Total: ${orden.total.toFixed(2)}
-        </div>
-
-        {error && <div className="text-red-500 p-4 bg-red-100 rounded">{error}</div>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-green-500 text-white px-6 py-2 rounded disabled:bg-gray-400"
-        >
-          {loading ? 'Guardando...' : 'Crear Orden'}
-        </button>
       </form>
+  
+      {/* Modal de selección de productos */}
+      {showProductSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
+            {/* Header del modal */}
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-bold">Seleccionar Productos</h3>
+              <button
+                onClick={() => {
+                  setShowProductSelector(false);
+                  setSelectedProduct(null);
+                  setSearchTerm('');
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+  
+            {/* Barra de búsqueda */}
+            <input
+              type="text"
+              placeholder="Buscar productos..."
+              className="w-full p-3 border rounded-lg mb-4"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+  
+            {/* Grid de productos */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1">
+              {filteredProducts.map((producto) => (
+                <div
+                  key={producto.producto_id}
+                  className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                    selectedProduct?.producto_id === producto.producto_id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'hover:border-blue-300'
+                  }`}
+                  onClick={() => setSelectedProduct(producto)}
+                >
+                  {producto.imagen_url ? (
+                    <img
+                      src={producto.imagen_url}
+                      alt={producto.nombre}
+                      className="w-full h-32 object-cover rounded-lg mb-2"
+                    />
+                  ) : (
+                    <div className="w-full h-32 bg-gray-100 rounded-lg mb-2 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                  <h4 className="font-semibold truncate">{producto.nombre}</h4>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm text-gray-600">${producto.precio}</span>
+                    <span className="text-xs text-gray-500">Stock: {producto.stock}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+  
+            {/* Panel de selección de cantidad */}
+            {selectedProduct && (
+              <div className="border-t pt-4 mt-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex items-center gap-4">
+                    {selectedProduct.imagen_url && (
+                      <img
+                        src={selectedProduct.imagen_url}
+                        alt={selectedProduct.nombre}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div>
+                      <h4 className="font-semibold">{selectedProduct.nombre}</h4>
+                      <p className="text-sm text-gray-600">
+                        Stock disponible: {selectedProduct.stock}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="flex-1">
+                      <label className="block text-sm mb-1">Cantidad:</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={selectedProduct.stock}
+                        value={quantity}
+                        onChange={(e) => {
+                          const value = Math.max(1, parseInt(e.target.value) || 1);
+                          setQuantity(Math.min(value, selectedProduct.stock));
+                        }}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddProduct}
+                      className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 mt-2 md:mt-0"
+                    >
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
+
 }
