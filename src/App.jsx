@@ -8,6 +8,7 @@ import Payments from './componentes/payments';
 // App.js
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RegistrarUsuario from './componentes/registrarUsuario';
+import NuevaOrden from './componentes/nuevaOrden';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path='/nueva-orden' element={<NuevaOrden/>}/>
         <Route path="/products" element={<Products />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/register" element={<RegistrarUsuario/>} />
