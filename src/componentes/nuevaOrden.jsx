@@ -31,44 +31,44 @@ export default function NuevaOrden() {
       producto_id: selectedProduct.producto_id,
       cantidad: quantity,
       precio_unitario: selectedProduct.precio,
-      subtotal: quantity * selectedProduct.precio
+      subtotal: quantity * selectedProduct.precio 
     };
-
+  
     setItems([...items, newItem]);
     setShowProductSelector(false);
     setSelectedProduct(null);
     setQuantity(1);
   };
+  const [necesitaActualizar, setNecesitaActualizar] = useState(false);
 
-  // Cargar mesas y productos al montar el componente
-  useEffect(() => {
-    const cargarDatosIniciales = async () => {
-      const { data: mesasData } = await supabase
-        .from('mesas')
-        .select('mesa_id, numero')
-        .eq('estado', 'disponible');
+  // 3. Corrige el useEffect de carga inicial
+useEffect(() => {
+  const cargarDatosIniciales = async () => {
+    try {
+      const [mesasRes, productosRes] = await Promise.all([
+        supabase.from('mesas').select('mesa_id, numero').eq('estado', 'disponible'),
+        supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+      ]);
 
-      const { data: productosData } = await supabase
-        .from('productos')
-        .select('producto_id, nombre, precio, stock');
+      if (mesasRes.error) throw mesasRes.error;
+      if (productosRes.error) throw productosRes.error;
 
-      setMesasDisponibles(mesasData || []);
-      setProductos(productosData || []);
-    };
+      setMesasDisponibles(mesasRes.data);
+      setProductos(productosRes.data);
+      setNecesitaActualizar(false);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-    cargarDatosIniciales();
-  }, []);
+  cargarDatosIniciales();
+}, [necesitaActualizar]);
 
   // Actualizar subtotal cuando cambia cantidad o precio
   useEffect(() => {
-    const nuevosItems = items.map(item => ({
-      ...item,
-      subtotal: item.cantidad * item.precio_unitario
-    }));
-
-    const nuevoTotal = nuevosItems.reduce((sum, item) => sum + item.subtotal, 0);
-
-    setItems(nuevosItems);
+    const nuevoTotal = items.reduce((sum, item) => 
+      sum + (item.cantidad * item.precio_unitario), 0
+    );
     setOrden(prev => ({ ...prev, total: nuevoTotal }));
   }, [items]);
 
@@ -84,60 +84,72 @@ export default function NuevaOrden() {
     setItems(newItems);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+// 1. Corrige el reset del formulario en handleSubmit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-      // Validar stock
-      for (const item of items) {
-        const producto = productos.find(p => p.producto_id === item.producto_id);
-        if (producto?.stock < item.cantidad) {
-          throw new Error(`Stock insuficiente para ${producto.nombre}`);
-        }
+  try {
+    // Validación mejorada de stock
+    const stockErrors = items.reduce((errors, item) => {
+      const producto = productos.find(p => p.producto_id === item.producto_id);
+      if (!producto) {
+        errors.push(`Producto no encontrado`);
+      } else if (producto.stock < item.cantidad) {
+        errors.push(`Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`);
       }
+      return errors;
+    }, []);
 
-      // Insertar orden
-      const { data: ordenData, error: ordenError } = await supabase
-        .from('ordenes')
-        .insert([{ ...orden, total: orden.total.toFixed(2) }])
-        .select();
+    if (stockErrors.length > 0) {
+      throw new Error(stockErrors.join('\n'));
+    }
 
-      if (ordenError) throw ordenError;
+    // Insertar orden con transacción
+    const { data: ordenData, error: ordenError } = await supabase
+      .from('ordenes')
+      .insert([{ 
+        ...orden, 
+        total: parseFloat(orden.total.toFixed(2)) 
+      }])
+      .select();
 
-      // Insertar detalles
-      const detalles = items.map(item => ({
-        orden_id: ordenData[0].orden_id,
+    if (ordenError) throw ordenError;
+
+    // Insertar detalles y actualizar stock
+    const updates = await supabase.rpc('crear_orden_completa', {
+      orden_id: ordenData[0].orden_id,
+      items: items.map(item => ({
         producto_id: item.producto_id,
         cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.subtotal.toFixed(2)
-      }));
+        precio: item.precio_unitario
+      })),
+      mesa_id: orden.mesa_id
+    });
 
-      const { error: detallesError } = await supabase
-        .from('detalles_orden')
-        .insert(detalles);
+    if (updates.error) throw updates.error;
 
-      if (detallesError) throw detallesError;
+    // Resetear formulario correctamente
+    setOrden({
+      mesa_id: null,
+      usuario_id: null,
+      estado: 'pendiente',
+      total: 0.00
+    });
+    setItems([]);
+    setNecesitaActualizar(true);
+    
+    alert('Orden creada exitosamente!');
 
-      // Actualizar estado de la mesa
-      await supabase
-        .from('mesas')
-        .update({ estado: 'ocupada' })
-        .eq('mesa_id', orden.mesa_id);
+  } catch (err) {
+    setError(err.message);
+    console.error('Error:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      // Resetear formulario
-      setOrden({ mesa_id: null, estado: 'pendiente', total: 0 });
-      setItems([{ producto_id: null, cantidad: 1, precio_unitario: 0, subtotal: 0 }]);
-      alert('Orden creada exitosamente!');
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
   return (
     <div className="max-w-4xl mx-auto p-4 relative">
       <h1 className="text-2xl font-bold mb-6">Nueva Orden</h1>
@@ -204,9 +216,10 @@ export default function NuevaOrden() {
             <div className="space-y-4">
               {items.map((item, index) => {
                 const producto = productos.find(p => p.producto_id === item.producto_id);
+                if (!producto) return null; // Evita errores con productos no encontrados
                 
                 return (
-                  <div key={index} className="border p-4 rounded-lg bg-white shadow-sm">
+                  <div key={`${item.producto_id}-${index}`} className="border p-4 rounded-lg bg-white shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
                         {producto?.imagen_url ? (
