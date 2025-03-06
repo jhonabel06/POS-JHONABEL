@@ -46,7 +46,7 @@ useEffect(() => {
   const cargarDatosIniciales = async () => {
     try {
       const [mesasRes, productosRes] = await Promise.all([
-        supabase.from('mesas').select('mesa_id, numero').eq('estado', 'disponible'),
+        supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
         supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
       ]);
 
@@ -169,7 +169,7 @@ const handleSubmit = async (e) => {
               <option value="">Seleccionar mesa</option>
               {mesasDisponibles.map(mesa => (
                 <option key={mesa.mesa_id} value={mesa.mesa_id}>
-                  Mesa {mesa.numero}
+                  Mesa {mesa.mesa_id}
                 </option>
               ))}
             </select>

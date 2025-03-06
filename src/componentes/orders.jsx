@@ -23,7 +23,7 @@ const fetchOrders = async () => {
         cantidad,
         precio_unitario,
         subtotal,
-        productos:producto_id (nombre)
+        productos:producto_id (nombre,imagen_url)
       )
     `)
     .order('fecha_creacion', { ascending: false });
@@ -45,7 +45,7 @@ const fetchOrders = async () => {
         producto: {
           producto_id: detail.productos.producto_id, // Corregido
           nombre: detail.productos.nombre,
-          imagen: '/src/utilidades/hamburguesa.jpg',
+          imagen: detail.productos.imagen_url,
           precio: detail.precio_unitario
         }
       }))
