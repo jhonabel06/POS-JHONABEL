@@ -1,4 +1,4 @@
-import { useState, useEffect  } from 'react';
+import { useState, useEffect } from 'react';
 import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabaseClient'; // Asegúrate de usar la misma importación que en tu login
 
@@ -8,12 +8,12 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ 
-    nombre: '', 
-    precio: '', 
-    stock: '', 
+  const [formData, setFormData] = useState({
+    nombre: '',
+    precio: '',
+    stock: '',
     categoria_id: '',
-    descripcion: '' 
+    descripcion: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -22,14 +22,18 @@ const Products = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  //Modal para categoria
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryFormData, setCategoryFormData] = useState({ nombre: '' });
+  const [categoryErrors, setCategoryErrors] = useState({});
 
   // Obtener productos y categorías
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
-        const { data: categoriesData, error: categoriesError} = await supabase
+
+        const { data: categoriesData, error: categoriesError } = await supabase
           .from('categorias')
           .select('*');
 
@@ -59,7 +63,7 @@ const Products = () => {
           categoria_id: p.categoria_id,
           imagen_url: p.imagen_url
         }));
-        
+
         setProducts(formattedProducts);
       } catch (error) {
         setErrorMessage(error.message);
@@ -71,8 +75,51 @@ const Products = () => {
     fetchData();
   }, []);
 
+  // Función para manejar el envío de categorías
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = {};
+
+    if (!categoryFormData.nombre.trim()) {
+      newErrors.nombre = 'Nombre es requerido';
+    }
+
+    setCategoryErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('categorias')
+        .insert([{ nombre: categoryFormData.nombre }])
+        .select();
+
+      if (error) throw error;
+
+      // Actualizar lista de categorías
+      const { data: newCategories, error: fetchError } = await supabase
+        .from('categorias')
+        .select('*');
+
+      if (fetchError) throw fetchError;
+      setCategories(newCategories);
+
+      setIsCategoryModalOpen(false);
+      setCategoryFormData({ nombre: '' });
+      setCategoryErrors({});
+    } catch (error) {
+      if (error.code === '23505') { // Violación de unique constraint
+        setCategoryErrors({ nombre: 'Esta categoría ya existe' });
+      } else {
+        setErrorMessage(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
+  
 
   const validateForm = () => {
     const newErrors = {};
@@ -88,12 +135,12 @@ const Products = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-  
+
     try {
       setLoading(true);
       let productId;
       let oldImageUrl = null;
-  
+
       // Si es edición, obtener imagen anterior
       if (editingProduct) {
         const { data: existingProduct, error: fetchError } = await supabase
@@ -101,11 +148,11 @@ const Products = () => {
           .select('imagen_url')
           .eq('producto_id', editingProduct)
           .single();
-  
+
         if (fetchError) throw fetchError;
         oldImageUrl = existingProduct?.imagen_url;
       }
-  
+
       // Crear/actualizar el producto
       const productData = {
         nombre: formData.nombre,
@@ -114,14 +161,14 @@ const Products = () => {
         stock: formData.stock,
         categoria_id: formData.categoria_id
       };
-  
+
       if (editingProduct) {
         // Actualizar producto existente
         const { error: updateError } = await supabase
           .from('productos')
           .update(productData)
           .eq('producto_id', editingProduct);
-  
+
         if (updateError) throw updateError;
         productId = editingProduct;
       } else {
@@ -130,11 +177,11 @@ const Products = () => {
           .from('productos')
           .insert([{ ...productData, fecha_creacion: new Date().toISOString() }])
           .select();
-  
+
         if (insertError) throw insertError;
         productId = newProduct[0].producto_id;
       }
-  
+
       // Manejo de la imagen
       if (selectedImage) {
         // 1. Eliminar imagen anterior si existe
@@ -143,34 +190,34 @@ const Products = () => {
           const { error: removeError } = await supabase.storage
             .from('imagenes_productos')
             .remove([fileName]);
-  
+
           if (removeError) console.error('Error eliminando imagen anterior:', removeError);
         }
-  
+
         // 2. Subir nueva imagen
         const fileExt = selectedImage.name.split('.').pop();
         const fileName = `${productId}_${Date.now()}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('imagenes_productos')
           .upload(fileName, selectedImage);
-  
+
         if (uploadError) throw uploadError;
-  
+
         // 3. Obtener URL pública
         const { data: { publicUrl } } = supabase.storage
           .from('imagenes_productos')
           .getPublicUrl(fileName);
-  
+
         // 4. Actualizar producto con nueva URL
         const { error: urlUpdateError } = await supabase
           .from('productos')
           .update({ imagen_url: publicUrl })
           .eq('producto_id', productId);
-  
+
         if (urlUpdateError) throw urlUpdateError;
       }
-  
+
       // Actualizar lista de productos
       const { data, error: fetchError } = await supabase
         .from('productos')
@@ -184,9 +231,9 @@ const Products = () => {
           imagen_url,
           categorias (nombre)
         `);
-  
+
       if (fetchError) throw fetchError;
-  
+
       const formattedProducts = data.map(p => ({
         id: p.producto_id,
         nombre: p.nombre,
@@ -197,7 +244,7 @@ const Products = () => {
         categoria_id: p.categoria_id,
         imagen_url: p.imagen_url
       }));
-  
+
       setProducts(formattedProducts);
       setIsModalOpen(false);
     } catch (error) {
@@ -219,7 +266,7 @@ const Products = () => {
         .eq('producto_id', id);
 
       if (error) throw error;
-      
+
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       setErrorMessage(error.message);
@@ -231,12 +278,12 @@ const Products = () => {
 
   // Modificar handleCreate para resetear imagen
   const handleCreate = () => {
-    setFormData({ 
-      nombre: '', 
-      precio: '', 
-      stock: '', 
-      categoria_id: '', 
-      descripcion: '' 
+    setFormData({
+      nombre: '',
+      precio: '',
+      stock: '',
+      categoria_id: '',
+      descripcion: ''
     });
     setSelectedImage(null);
     setPreviewUrl('');
@@ -255,10 +302,10 @@ const Products = () => {
         .from('productos')
         .update({ stock: newStock })
         .eq('producto_id', id);
-  
+
       if (!error) {
         setProducts(prev =>
-          prev.map(p => p.id === id ? {...p, stock: newStock} : p)
+          prev.map(p => p.id === id ? { ...p, stock: newStock } : p)
         );
       }
     } catch (error) {
@@ -287,7 +334,7 @@ const Products = () => {
           <p className="text-sm text-red-700">{errorMessage}</p>
         </div>
       )}
-      
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Productos</h2>
         <div className="flex items-center gap-4">
@@ -305,9 +352,16 @@ const Products = () => {
             <PlusIcon className="w-5 h-5 mr-2" />
             Nuevo Producto
           </button>
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Nueva Categoría
+          </button>
         </div>
       </div>
-  
+
       {/* Tabla de productos */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -364,7 +418,7 @@ const Products = () => {
           </tbody>
         </table>
       </div>
-  
+
       {/* Modal de edición/creación */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -372,7 +426,7 @@ const Products = () => {
             <h3 className="text-lg font-semibold mb-4">
               {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
             </h3>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 {/* Nuevo campo para imagen */}
@@ -400,7 +454,7 @@ const Products = () => {
                     />
                   )}
                 </div>
-  
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Nombre</label>
                   <input
@@ -408,13 +462,12 @@ const Products = () => {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.nombre ? 'border-red-500' : 'border-gray-300'
-                    } shadow-sm p-2`}
+                    className={`mt-1 block w-full rounded-md border ${errors.nombre ? 'border-red-500' : 'border-gray-300'
+                      } shadow-sm p-2`}
                   />
                   {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>}
                 </div>
-  
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Descripción</label>
                   <textarea
@@ -424,7 +477,7 @@ const Products = () => {
                     className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
                   />
                 </div>
-  
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Precio</label>
                   <input
@@ -433,13 +486,12 @@ const Products = () => {
                     name="precio"
                     value={formData.precio}
                     onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.precio ? 'border-red-500' : 'border-gray-300'
-                    } shadow-sm p-2`}
+                    className={`mt-1 block w-full rounded-md border ${errors.precio ? 'border-red-500' : 'border-gray-300'
+                      } shadow-sm p-2`}
                   />
                   {errors.precio && <p className="text-red-500 text-sm mt-1">{errors.precio}</p>}
                 </div>
-  
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Stock</label>
                   <input
@@ -447,13 +499,12 @@ const Products = () => {
                     name="stock"
                     value={formData.stock}
                     onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      errors.stock ? 'border-red-500' : 'border-gray-300'
-                    } shadow-sm p-2`}
+                    className={`mt-1 block w-full rounded-md border ${errors.stock ? 'border-red-500' : 'border-gray-300'
+                      } shadow-sm p-2`}
                   />
                   {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock}</p>}
                 </div>
-  
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Categoría</label>
                   <select
@@ -472,7 +523,7 @@ const Products = () => {
                   {errors.categoria_id && <p className="text-red-500 text-sm mt-1">{errors.categoria_id}</p>}
                 </div>
               </div>
-  
+
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   type="button"
@@ -484,9 +535,58 @@ const Products = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${
-                    loading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                >
+                  {loading ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Nueva Categoría</h3>
+
+            <form onSubmit={handleCategorySubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nombre de la categoría
+                  </label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={categoryFormData.nombre}
+                    onChange={(e) => setCategoryFormData({ nombre: e.target.value })}
+                    className={`mt-1 block w-full rounded-md border ${categoryErrors.nombre ? 'border-red-500' : 'border-gray-300'
+                      } shadow-sm p-2`}
+                  />
+                  {categoryErrors.nombre && (
+                    <p className="text-red-500 text-sm mt-1">{categoryErrors.nombre}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setCategoryErrors({});
+                  }}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 >
                   {loading ? 'Guardando...' : 'Guardar'}
                 </button>
