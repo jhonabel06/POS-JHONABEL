@@ -421,7 +421,9 @@ const Products = () => {
 
       {/* Modal de edición/creación */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        // <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+         //<div className="fixed inset-0 bg-[url(https://okadhzfrutumdlfrgtaz.supabase.co/storage/v1/object/public/background//restaurant.jpg)] bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-blue-500/30 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold mb-4">
               {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}

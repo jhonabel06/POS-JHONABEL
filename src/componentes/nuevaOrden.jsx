@@ -183,10 +183,10 @@ const handleSubmit = async (e) => {
               onChange={handleOrdenChange}
               className="w-full p-2 border rounded"
             >
-              <option value="pendiente">Pendiente</option>
+              {/*<option value="pendiente">Pendiente</option>*/}
               <option value="en_proceso">En Proceso</option>
-              <option value="listo">Listo</option>
-              <option value="pagado">Pagado</option>
+              {/*<option value="listo">Listo</option>*/}
+              {/*<option value="pagado">Pagado</option>*/}
             </select>
           </div>
         </div>
