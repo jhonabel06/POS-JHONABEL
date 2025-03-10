@@ -5,7 +5,7 @@ export default function NuevaOrden() {
   const [orden, setOrden] = useState({
     mesa_id: null,
     usuario_id: null, // Puedes obtenerlo de la sesión si es necesario
-    estado: 'pendiente',
+    estado: 'en_proceso',
     total: 0.00
   });
 
@@ -25,7 +25,7 @@ export default function NuevaOrden() {
   );
 
   const handleAddProduct = () => {
-    if (!selectedProduct || quantity < 1) return;
+    if (!selectedProduct || quantity <= 0) return;
     
     const newItem = {
       producto_id: selectedProduct.producto_id,
@@ -37,7 +37,7 @@ export default function NuevaOrden() {
     setItems([...items, newItem]);
     setShowProductSelector(false);
     setSelectedProduct(null);
-    setQuantity(1);
+    setQuantity(0);
   };
   const [necesitaActualizar, setNecesitaActualizar] = useState(false);
 
@@ -134,7 +134,7 @@ const handleSubmit = async (e) => {
     setOrden({
       mesa_id: null,
       usuario_id: null,
-      estado: 'pendiente',
+      estado: 'en_proceso',
       total: 0.00
     });
     setItems([]);
@@ -319,7 +319,12 @@ const handleSubmit = async (e) => {
                       ? 'border-blue-500 bg-blue-50'
                       : 'hover:border-blue-300'
                   }`}
-                  onClick={() => setSelectedProduct(producto)}
+                  onClick={() => {
+                    setSelectedProduct(producto);
+                    setQuantity(0);
+                  }
+
+                  }
                 >
                   {producto.imagen_url ? (
                     <img
@@ -368,11 +373,11 @@ const handleSubmit = async (e) => {
                       <label className="block text-sm mb-1">Cantidad:</label>
                       <input
                         type="number"
-                        min="1"
+                        min="0"
                         max={selectedProduct.stock}
                         value={quantity}
                         onChange={(e) => {
-                          const value = Math.max(1, parseInt(e.target.value) || 1);
+                          const value = Math.max(0, parseInt(e.target.value) || 0);
                           setQuantity(Math.min(value, selectedProduct.stock));
                         }}
                         className="w-full p-2 border rounded"
@@ -380,7 +385,10 @@ const handleSubmit = async (e) => {
                     </div>
                     <button
                       onClick={handleAddProduct}
-                      className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 mt-2 md:mt-0"
+                      className="bg-green-500 text-white px-6 py-2 rounded ${
+                        quantity <= 0 ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-green-600'
+                        }" 
+                      disabled={quantity <= 0}
                     >
                       Agregar
                     </button>

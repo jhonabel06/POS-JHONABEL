@@ -87,6 +87,31 @@ const handleCompleteOrder = async (orderId) => {
   }
 }
 
+//Funcion para manejar el pago
+const handlePaymentOrder = async (orderId) => {
+  try {
+    // Actualizar en Supabase
+    const { error } = await supabase
+      .from('ordenes')
+      .update({ estado: 'pagado' })
+      .eq('orden_id', orderId)
+
+    if (error) throw error
+
+    // Actualizar estado local
+    setOrders(prevOrders => 
+      prevOrders.map(order => 
+        order.orden_id === orderId 
+          ? { ...order, estado: 'pagado' } 
+          : order
+      )
+    )
+  } catch (err) {
+    console.error('Error al completar orden:', err)
+    setError(err.message)
+  }
+}
+
 if (loading) return <div>Cargando órdenes...</div>
 if (error) return <div>Error: {error}</div>
 
@@ -95,6 +120,7 @@ if (error) return <div>Error: {error}</div>
       <OrdersComponent 
         orders={orders} 
         onCompleteOrder={handleCompleteOrder} // Pasamos la función como prop
+        onPaymentOrder={handlePaymentOrder} // Pasamos la función como prop
       />
     </div>
   );
