@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { Link } from 'react-router-dom';
+import { Square3Stack3DIcon, HomeIcon } from '@heroicons/react/24/outline';
 
 export default function NuevaOrden() {
   const [orden, setOrden] = useState({
@@ -9,6 +11,7 @@ export default function NuevaOrden() {
     total: 0.00
   });
 
+  
   const [items, setItems] = useState([]);
   const [mesasDisponibles, setMesasDisponibles] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -151,8 +154,25 @@ const handleSubmit = async (e) => {
 };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 relative">
-      <h1 className="text-2xl font-bold mb-6">Nueva Orden</h1>
+    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold mb-6">Nueva Orden</h1>
+        <Link to="/dashboard"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          >
+            <HomeIcon className="w-5 h-5 mr-2" />
+            Dashboard
+          </Link>
+        <Link to="/orders"
+            className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 flex items-center"
+          >
+            <Square3Stack3DIcon className="w-5 h-5 mr-2" />
+            Órdenes Activas
+          </Link>
+
+      </div>
+
       
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Sección de información de la orden */}
@@ -283,7 +303,7 @@ const handleSubmit = async (e) => {
   
       {/* Modal de selección de productos */}
       {showProductSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-blue-500/30 backdrop-blur-sm  bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
             {/* Header del modal */}
             <div className="flex justify-between items-center mb-4">
@@ -399,6 +419,7 @@ const handleSubmit = async (e) => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 

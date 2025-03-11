@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon , HomeIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabaseClient'; // Asegúrate de usar la misma importación que en tu login
+import { Link } from 'react-router-dom';
 
 
 const Products = () => {
@@ -338,6 +339,7 @@ const Products = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Productos</h2>
         <div className="flex items-center gap-4">
+
           <input
             type="text"
             placeholder="Buscar por descripción"
@@ -345,6 +347,12 @@ const Products = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <Link to="/dashboard"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          >
+            <HomeIcon className="w-5 h-5 mr-2" />
+            Dashboard
+          </Link>
           <button
             onClick={handleCreate}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
