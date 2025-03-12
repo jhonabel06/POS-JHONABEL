@@ -64,7 +64,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <h3 className="text-gray-500 text-sm">Ventas hoy</h3>
-                <p className="text-2xl font-bold text-gray-700">$1,240.00</p>
+                <p className="text-2xl font-bold text-gray-700">$1000.00</p>
               </div>
             </div>
           </div>
@@ -159,11 +159,6 @@ const Dashboard = () => {
                 />
               </BarChart>
             </ResponsiveContainer>
-            {/* <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailySales}>
-                <Bar dataKey="ventas" fill="#4F46E5" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer> */}
           </div>
         </div>
 

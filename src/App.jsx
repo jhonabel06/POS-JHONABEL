@@ -9,29 +9,22 @@ import Payments from './componentes/payments';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RegistrarUsuario from './componentes/registrarUsuario';
 import NuevaOrden from './componentes/nuevaOrden';
+import Layout from './componentes/Layout';
 
 function App() {
   return (
-    // <BrowserRouter>
-    //   <Routes>
-    //     <Route path="/" element={<Login />} />
-    //     <Route path="/dashboard" element={<Dashboard2 />}>
-    //     <Route path="/orders" element={<Orders />} />
-    //     <Route path="/products" element={<Products />} />
-    //     <Route path="/payments" element={<Payments />} />
-    //     </Route>
-    //   </Routes>
-    // </BrowserRouter>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path='/nueva-orden' element={<NuevaOrden/>}/>
-        <Route path="/products" element={<Products />} />
-        <Route path="/payments" element={<Payments />} />
-        <Route path="/register" element={<RegistrarUsuario/>} />
+        <Route path="/register" element={<RegistrarUsuario />} />
         
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/nueva-orden" element={<NuevaOrden />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/payments" element={<Payments />} />
+        </Route>
       </Routes>
     </BrowserRouter>
 
