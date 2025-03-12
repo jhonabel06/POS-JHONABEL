@@ -330,6 +330,7 @@ const Products = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+    {/* <div className="min-h-screen bg-gray-50 p-8"> */}
       {errorMessage && (
         <div className="rounded-md bg-red-50 p-4 mb-4">
           <p className="text-sm text-red-700">{errorMessage}</p>

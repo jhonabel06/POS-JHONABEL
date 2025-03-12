@@ -64,7 +64,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <h3 className="text-gray-500 text-sm">Ventas hoy</h3>
-                <p className="text-2xl font-bold text-gray-700">$1000.00</p>
+                <p className="text-2xl font-bold text-gray-700">$25000.00</p>
               </div>
             </div>
           </div>

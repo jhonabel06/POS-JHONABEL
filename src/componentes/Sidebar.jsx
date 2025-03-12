@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const Sidebar = () => {
   return (
-    <div className="fixed left-0 top-0 h-screen w-64 bg-gray-800 p-6 text-white shadow-lg">
+    <div className="fixed left-0 top-0 h-screen w-40 bg-gray-800 p-6 text-white shadow-lg">
       <nav>
         <ul className="space-y-4">
           <li>
