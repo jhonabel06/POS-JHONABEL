@@ -4,89 +4,101 @@ import { Link } from 'react-router-dom';
 import { Square3Stack3DIcon, HomeIcon } from '@heroicons/react/24/outline';
 
 export default function NuevaOrden() {
+  // Estados iniciales
   const [orden, setOrden] = useState({
     mesa_id: null,
-    usuario_id: null, // Puedes obtenerlo de la sesión si es necesario
+    usuario_id: null,
     estado: 'en_proceso',
     total: 0.00
   });
 
-  
   const [items, setItems] = useState([]);
   const [mesasDisponibles, setMesasDisponibles] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showProductSelector, setShowProductSelector] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [quantity, setQuantity] = useState(1);
-  
 
+  // Filtrar productos
   const filteredProducts = productos.filter(producto => 
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddProduct = () => {
-    if (!selectedProduct || quantity <= 0) return;
-    
-    const newItem = {
-      producto_id: selectedProduct.producto_id,
-      cantidad: quantity,
-      precio_unitario: selectedProduct.precio,
-      subtotal: quantity * selectedProduct.precio 
-    };
-  
-    setItems([...items, newItem]);
-    setShowProductSelector(false);
-    setSelectedProduct(null);
-    setQuantity(0);
-  };
-  const [necesitaActualizar, setNecesitaActualizar] = useState(false);
+  // Agregar producto con click
+  const handleAddProduct = (producto) => {
+    if (producto.stock < 1) return;
 
-  // 3. Corrige el useEffect de carga inicial
-useEffect(() => {
-  const cargarDatosIniciales = async () => {
-    try {
-      const [mesasRes, productosRes] = await Promise.all([
-        supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
-        supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
-      ]);
-
-      if (mesasRes.error) throw mesasRes.error;
-      if (productosRes.error) throw productosRes.error;
-
-      setMesasDisponibles(mesasRes.data);
-      setProductos(productosRes.data);
-      setNecesitaActualizar(false);
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-
-  cargarDatosIniciales();
-}, [necesitaActualizar]);
-
-  // Actualizar subtotal cuando cambia cantidad o precio
-  useEffect(() => {
-    const nuevoTotal = items.reduce((sum, item) => 
-      sum + (item.cantidad * item.precio_unitario), 0
-    );
-    setOrden(prev => ({ ...prev, total: nuevoTotal }));
-  }, [items]);
-
-  const handleOrdenChange = (e) => {
-    setOrden({
-      ...orden,
-      [e.target.name]: e.target.value
+    setItems(prevItems => {
+      const existingIndex = prevItems.findIndex(item => item.producto_id === producto.producto_id);
+      
+      if (existingIndex !== -1) {
+        const updatedItems = [...prevItems];
+        if (updatedItems[existingIndex].cantidad >= producto.stock) return prevItems;
+        
+        updatedItems[existingIndex].cantidad += 1;
+        updatedItems[existingIndex].subtotal = updatedItems[existingIndex].cantidad * producto.precio;
+        return updatedItems;
+      }
+      
+      return [...prevItems, {
+        producto_id: producto.producto_id,
+        cantidad: 1,
+        precio_unitario: producto.precio,
+        subtotal: producto.precio
+      }];
     });
   };
 
+  // Cargar datos iniciales
+  useEffect(() => {
+    const cargarDatosIniciales = async () => {
+      try {
+        const [mesasRes, productosRes] = await Promise.all([
+          supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
+          supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+        ]);
+
+        if (mesasRes.error) throw mesasRes.error;
+        if (productosRes.error) throw productosRes.error;
+
+        setMesasDisponibles(mesasRes.data);
+        setProductos(productosRes.data);
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
+    cargarDatosIniciales();
+  }, []);
+
+  // Actualizar total
+  useEffect(() => {
+    const nuevoTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+    setOrden(prev => ({ ...prev, total: nuevoTotal }));
+  }, [items]);
+
+  // Eliminar item
   const removeItem = (index) => {
-    const newItems = items.filter((_, i) => i !== index);
-    setItems(newItems);
+    setItems(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Ajustar cantidad
+  const adjustQuantity = (index, adjustment) => {
+    setItems(prev => {
+      const newItems = [...prev];
+      const product = productos.find(p => p.producto_id === newItems[index].producto_id);
+      
+      if (!product) return prev;
+      
+      const newQuantity = newItems[index].cantidad + adjustment;
+      
+      if (newQuantity < 1 || newQuantity > product.stock) return prev;
+      
+      newItems[index].cantidad = newQuantity;
+      newItems[index].subtotal = newQuantity * newItems[index].precio_unitario;
+      return newItems;
+    });
+  };
 // 1. Corrige el reset del formulario en handleSubmit
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -141,7 +153,7 @@ const handleSubmit = async (e) => {
       total: 0.00
     });
     setItems([]);
-    setNecesitaActualizar(true);
+    //setNecesitaActualizar(true);
     
     alert('Orden creada exitosamente!');
 
@@ -153,274 +165,180 @@ const handleSubmit = async (e) => {
   }
 };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold mb-6">Nueva Orden</h1>
-        <Link to="/dashboard"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-          >
+return (
+  <div className="min-h-screen bg-gray-50 p-4">
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-3xl font-bold">Nueva Orden</h1>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Link to="/dashboard" className="btn-primary flex items-center">
             <HomeIcon className="w-5 h-5 mr-2" />
             Dashboard
           </Link>
-        <Link to="/orders"
-            className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 flex items-center"
-          >
+          <Link to="/orders" className="btn-secondary flex items-center">
             <Square3Stack3DIcon className="w-5 h-5 mr-2" />
-            Órdenes Activas
+            Órdenes
           </Link>
-
+        </div>
       </div>
 
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Sección de información de la orden */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-2">Mesa:</label>
-            <select
-              name="mesa_id"
-              value={orden.mesa_id || ''}
-              onChange={handleOrdenChange}
-              className="w-full p-2 border rounded"
-              required
-            >
-              <option value="">Seleccionar mesa</option>
-              {mesasDisponibles.map(mesa => (
-                <option key={mesa.mesa_id} value={mesa.mesa_id}>
-                  Mesa {mesa.mesa_id}
-                </option>
-              ))}
-            </select>
-          </div>
-  
-          <div>
-            <label className="block mb-2">Estado:</label>
-            <select
-              name="estado"
-              value={orden.estado}
-              onChange={handleOrdenChange}
-              className="w-full p-2 border rounded"
-            >
-              {/*<option value="pendiente">Pendiente</option>*/}
-              <option value="en_proceso">En Proceso</option>
-              {/*<option value="listo">Listo</option>*/}
-              {/*<option value="pagado">Pagado</option>*/}
-            </select>
-          </div>
-        </div>
-  
+      {/* Layout principal */}
+      <div className="grid md:grid-cols-2 gap-6">
         {/* Sección de productos */}
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Productos Seleccionados</h2>
-            <button
-              type="button"
-              onClick={() => setShowProductSelector(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Agregar Productos
-            </button>
-          </div>
-  
-          {/* Lista de productos agregados */}
-          {items.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">
-              No hay productos agregados
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {items.map((item, index) => {
-                const producto = productos.find(p => p.producto_id === item.producto_id);
-                if (!producto) return null; // Evita errores con productos no encontrados
-                
-                return (
-                  <div key={`${item.producto_id}-${index}`} className="border p-4 rounded-lg bg-white shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        {producto?.imagen_url ? (
-                          <img 
-                            src={producto.imagen_url} 
-                            alt={producto.nombre}
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
-                        
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{producto?.nombre || 'Producto no disponible'}</h4>
-                          <div className="flex gap-4 text-sm text-gray-600">
-                            <span>Cantidad: {item.cantidad}</span>
-                            <span>Precio unitario: ${item.precio_unitario.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-right min-w-[120px]">
-                        <p className="font-semibold">${item.subtotal.toFixed(2)}</p>
-                        <button
-                          onClick={() => removeItem(index)}
-                          className="text-red-500 hover:text-red-700 text-sm mt-1"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-  
-        {/* Total y botón de enviar */}
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center">
-            <span className="text-xl font-bold">Total:</span>
-            <span className="text-xl font-bold">${orden.total.toFixed(2)}</span>
-          </div>
-          
-          {error && <div className="text-red-500 p-3 bg-red-100 rounded mt-4">{error}</div>}
-          
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-500 text-white py-3 rounded mt-4 hover:bg-green-600 disabled:bg-gray-400 transition-colors"
-          >
-            {loading ? 'Procesando orden...' : 'Confirmar Orden'}
-          </button>
-        </div>
-      </form>
-  
-      {/* Modal de selección de productos */}
-      {showProductSelector && (
-        <div className="fixed inset-0 bg-blue-500/30 backdrop-blur-sm  bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
-            {/* Header del modal */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold">Seleccionar Productos</h3>
-              <button
-                onClick={() => {
-                  setShowProductSelector(false);
-                  setSelectedProduct(null);
-                  setSearchTerm('');
-                }}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-  
-            {/* Barra de búsqueda */}
+        <div className="bg-white p-4 rounded-xl shadow-sm">
+          <div className="mb-4">
             <input
               type="text"
               placeholder="Buscar productos..."
-              className="w-full p-3 border rounded-lg mb-4"
+              className="w-full p-3 border rounded-lg"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-  
-            {/* Grid de productos */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1">
-              {filteredProducts.map((producto) => (
-                <div
-                  key={producto.producto_id}
-                  className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                    selectedProduct?.producto_id === producto.producto_id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'hover:border-blue-300'
-                  }`}
-                  onClick={() => {
-                    setSelectedProduct(producto);
-                    setQuantity(0);
-                  }
-
-                  }
-                >
-                  {producto.imagen_url ? (
-                    <img
-                      src={producto.imagen_url}
-                      alt={producto.nombre}
-                      className="w-full h-32 object-cover rounded-lg mb-2"
-                    />
-                  ) : (
-                    <div className="w-full h-32 bg-gray-100 rounded-lg mb-2 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                  <h4 className="font-semibold truncate">{producto.nombre}</h4>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-gray-600">${producto.precio}</span>
-                    <span className="text-xs text-gray-500">Stock: {producto.stock}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 h-[calc(100vh-300px)] overflow-y-auto">
+            {filteredProducts.map(producto => (
+              <button
+                key={producto.producto_id}
+                onClick={() => handleAddProduct(producto)}
+                disabled={producto.stock < 1}
+                className={`p-3 rounded-lg transition-all ${
+                  producto.stock < 1 
+                    ? 'bg-gray-100 cursor-not-allowed' 
+                    : 'hover:bg-blue-50 hover:shadow-md active:scale-95'
+                }`}
+              >
+                {producto.imagen_url ? (
+                  <img
+                    src={producto.imagen_url}
+                    alt={producto.nombre}
+                    className="w-full h-32 object-cover rounded-lg mb-2"
+                  />
+                ) : (
+                  <div className="w-full h-32 bg-gray-100 rounded-lg mb-2 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
                   </div>
+                )}
+                <h4 className="font-semibold truncate">{producto.nombre}</h4>
+                <div className="flex justify-between items-center mt-2 text-sm">
+                  <span className="text-gray-600">${producto.precio}</span>
+                  <span className={`${
+                    producto.stock < 1 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    Stock: {producto.stock}
+                  </span>
                 </div>
-              ))}
-            </div>
-  
-            {/* Panel de selección de cantidad */}
-            {selectedProduct && (
-              <div className="border-t pt-4 mt-4">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div className="flex items-center gap-4">
-                    {selectedProduct.imagen_url && (
-                      <img
-                        src={selectedProduct.imagen_url}
-                        alt={selectedProduct.nombre}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    )}
-                    <div>
-                      <h4 className="font-semibold">{selectedProduct.nombre}</h4>
-                      <p className="text-sm text-gray-600">
-                        Stock disponible: {selectedProduct.stock}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="flex-1">
-                      <label className="block text-sm mb-1">Cantidad:</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={selectedProduct.stock}
-                        value={quantity}
-                        onChange={(e) => {
-                          const value = Math.max(0, parseInt(e.target.value) || 0);
-                          setQuantity(Math.min(value, selectedProduct.stock));
-                        }}
-                        className="w-full p-2 border rounded"
-                      />
-                    </div>
-                    <button
-                      onClick={handleAddProduct}
-                      className="bg-green-500 text-white px-6 py-2 rounded ${
-                        quantity <= 0 ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-green-600'
-                        }" 
-                      disabled={quantity <= 0}
-                    >
-                      Agregar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+              </button>
+            ))}
           </div>
         </div>
-      )}
-    </div>
-    </div>
-  );
 
+        {/* Sección de la orden */}
+        <div className="bg-white p-4 rounded-xl shadow-sm sticky top-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid gap-4">
+              <div>
+                <label className="block mb-2 font-medium">Mesa:</label>
+                <select
+                  name="mesa_id"
+                  value={orden.mesa_id || ''}
+                  onChange={(e) => setOrden({...orden, mesa_id: e.target.value})}
+                  className="w-full p-2 border rounded"
+                  required
+                >
+                  <option value="">Seleccionar mesa</option>
+                  {mesasDisponibles.map(mesa => (
+                    <option key={mesa.mesa_id} value={mesa.mesa_id}>
+                      Mesa {mesa.mesa_id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Items seleccionados */}
+            <div className="border-t pt-4">
+              <h2 className="text-xl font-semibold mb-4">Productos en la orden</h2>
+              {items.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">
+                  Toca los productos para agregarlos
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {items.map((item, index) => {
+                    const producto = productos.find(p => p.producto_id === item.producto_id);
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {producto?.imagen_url && (
+                            <img
+                              src={producto.imagen_url}
+                              alt={producto.nombre}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          )}
+                          <div>
+                            <h4 className="font-medium">{producto?.nombre}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <button
+                                onClick={() => adjustQuantity(index, -1)}
+                                className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center">
+                                {item.cantidad}
+                              </span>
+                              <button
+                                onClick={() => adjustQuantity(index, 1)}
+                                disabled={item.cantidad >= producto?.stock}
+                                className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-medium">${item.subtotal?.toFixed(2)}</span>
+                          <button
+                            onClick={() => removeItem(index)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Total y enviar */}
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-xl font-bold">Total:</span>
+                <span className="text-xl font-bold">${orden.total.toFixed(2)}</span>
+              </div>
+              
+              {error && <div className="text-red-500 p-3 bg-red-100 rounded">{error}</div>}
+              
+              <button
+                type="submit"
+                disabled={loading || items.length === 0}
+                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-400 transition-colors"
+              >
+                {loading ? 'Procesando...' : 'Confirmar Orden'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 }
