@@ -328,6 +328,21 @@ const Products = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+
+  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+  <h1 className="text-3xl font-bold">Órdenes Recientes</h1>
+  <div className="flex gap-2 w-full md:w-auto">
+    <Link to="/dashboard" className="btn-primary flex items-center">
+      <HomeIcon className="w-5 h-5 mr-2" />
+      Dashboard
+    </Link>
+    <Link to="/nueva-orden" className="btn-secondary flex items-center">
+      <PlusIcon className="w-5 h-5 mr-2" />
+      Nueva Orden
+    </Link>
+  </div>
+</div>
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
     {/* <div className="min-h-screen bg-gray-50 p-8"> */}
@@ -346,24 +361,24 @@ const Products = () => {
             placeholder="Buscar por descripción"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border-teal-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <Link to="/dashboard"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+            className="btn-primary flex items-center px-4 py-2 rounded-4xl hover:bg-teal-400"
           >
             <HomeIcon className="w-5 h-5 mr-2" />
             Dashboard
           </Link>
           <button
             onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+            className="btn-primary flex items-center px-4 py-2 rounded-4xl hover:bg-teal-400"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
             Nuevo Producto
           </button>
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+            className="btn-primary flex items-center  px-4 py-2 rounded-4xl hover:bg-teal-400"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
             Nueva Categoría
@@ -403,7 +418,7 @@ const Products = () => {
                     type="number"
                     value={product.stock}
                     onChange={(e) => handleStockChange(product.id, parseInt(e.target.value))}
-                    className="w-20 px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500"
+                    className="w-20 px-2 py-1 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:outline-none"
                     min="0"
                   />
                 </td>
@@ -411,7 +426,7 @@ const Products = () => {
                 <td className="px-6 py-4 whitespace-nowrap flex space-x-2">
                   <button
                     onClick={() => handleEdit(product)}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-teal-400 hover:text-teal-900"
                   >
                     <PencilIcon className="w-5 h-5" />
                   </button>
@@ -539,14 +554,14 @@ const Products = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                 >
                   {loading ? 'Guardando...' : 'Guardar'}
@@ -590,14 +605,14 @@ const Products = () => {
                     setIsCategoryModalOpen(false);
                     setCategoryErrors({});
                   }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                 >
                   {loading ? 'Guardando...' : 'Guardar'}
