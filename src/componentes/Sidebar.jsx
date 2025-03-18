@@ -19,6 +19,18 @@ const Sidebar = () => {
           </li>
           <li>
             <NavLink
+              to="/HistorialPagos"
+              className={({ isActive }) => 
+                `block rounded-lg p-3 transition-colors hover:bg-gray-700 ${
+                  isActive ? 'bg-blue-600 text-white' : 'text-gray-300'
+                }`
+              }
+            >
+              Pagos
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/orders"
               className={({ isActive }) => 
                 `block rounded-lg p-3 transition-colors hover:bg-gray-700 ${
@@ -39,18 +51,6 @@ const Sidebar = () => {
               }
             >
               Productos
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/payments"
-              className={({ isActive }) => 
-                `block rounded-lg p-3 transition-colors hover:bg-gray-700 ${
-                  isActive ? 'bg-blue-600 text-white' : 'text-gray-300'
-                }`
-              }
-            >
-              Pagos
             </NavLink>
           </li>
         </ul>

@@ -3,7 +3,7 @@ import Login from './componentes/login';
 import Dashboard from './componentes/dashboard';
 import Orders from './componentes/orders';
 import Products from './componentes/products';
-import Payments from './componentes/payments';
+import Payments from './componentes/HistorialPagos';
 
 // App.js
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -23,7 +23,7 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/nueva-orden" element={<NuevaOrden />} />
           <Route path="/products" element={<Products />} />
-          <Route path="/payments" element={<Payments />} />
+          <Route path="/HistorialPagos" element={<Payments />} />
         </Route>
       </Routes>
     </BrowserRouter>

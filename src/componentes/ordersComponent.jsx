@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { PlusIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
-const OrdersComponent = ({ orders, onCompleteOrder,onPaymentOrder }) => {
+const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -31,22 +31,7 @@ const OrdersComponent = ({ orders, onCompleteOrder,onPaymentOrder }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      {/* <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Órdenes Recientes</h1> 
-        <Link to="/dashboard"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-          >
-            <HomeIcon className="w-5 h-5 mr-2" />
-            Dashboard
-          </Link>
-        <Link to="/nueva-orden"
-            className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 flex items-center"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Nueva Orden
-          </Link>
-      </div> */}
-           {/* Header */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold">Órdenes Recientes</h1>
         <div className="flex gap-2 w-full md:w-auto">
@@ -114,7 +99,31 @@ const OrdersComponent = ({ orders, onCompleteOrder,onPaymentOrder }) => {
               <div className="border-t border-b border-gray-200 py-4">
                 {orden.detalles.map((detalle) => (
                   <div key={detalle.detalle_orden_id} className="flex items-center py-2">
-                    <img src={detalle.producto.imagen} alt={detalle.producto.nombre} className="w-16 h-16 object-cover rounded-md" />
+                    {/* Contenedor de imagen con placeholder */}
+                    {detalle.producto.imagen ? (
+                      <img
+                        src={detalle.producto.imagen}
+                        alt={detalle.producto.nombre}
+                        className="w-16 h-16 object-cover rounded-md"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-8 w-8 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                      </div>
+                    )}
                     <div className="ml-4 flex-1">
                       <h3 className="text-gray-800 font-medium">{detalle.producto.nombre}</h3>
                       <p className="text-sm text-gray-500">{detalle.cantidad} x ${detalle.precio_unitario.toFixed(2)}</p>
@@ -123,16 +132,11 @@ const OrdersComponent = ({ orders, onCompleteOrder,onPaymentOrder }) => {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end items-center pt-4">
-                <p className="text-lg font-semibold text-gray-800">Total: ${orden.total.toFixed(2)}</p>
-              </div>
             </div>
           ))}
-      </div>
     </div>
-
-    
-  );
+  </div >
+    );
 };
 
 OrdersComponent.propTypes = {
