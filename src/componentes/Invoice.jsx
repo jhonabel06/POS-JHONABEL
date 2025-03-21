@@ -14,7 +14,7 @@ const Invoice = forwardRef(({ order }, ref) => {
   };
 
   return (
-    <div ref={ref} className="bg-white p-8 max-w-2xl mx-auto print:p-0 print:max-w-none">
+    <div ref={ref} className="invoice-container bg-white p-8 max-w-2xl mx-auto print:p-0 print:max-w-none">
       {/* Encabezado */}
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
@@ -26,14 +26,10 @@ const Invoice = forwardRef(({ order }, ref) => {
 
       {/* Información de la orden */}
       <div className="mb-8">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <p className="text-gray-600">Número de Orden:</p>
             <p className="font-semibold">#{order.orden_id}</p>
-          </div>
-          <div>
-            <p className="text-gray-600">Fecha:</p>
-            <p className="font-semibold">{formatDate(order.fecha_creacion)}</p>
           </div>
           {order.mesa_id && (
             <div>
@@ -41,6 +37,10 @@ const Invoice = forwardRef(({ order }, ref) => {
               <p className="font-semibold">{order.mesa_id}</p>
             </div>
           )}
+          <div>
+            <p className="text-gray-600">Fecha:</p>
+            <p className="font-semibold">{formatDate(order.fecha_creacion)}</p>
+          </div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ const Invoice = forwardRef(({ order }, ref) => {
       </div>
 
       {/* Pie de página */}
-      <div className="mt-8 text-center text-gray-500 text-sm">
+      <div className="mt-2 text-center text-gray-500 text-sm">
         <p>¡Gracias por su preferencia!</p>
         <p>Este documento sirve como comprobante de pago</p>
       </div>

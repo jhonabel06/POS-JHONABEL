@@ -1,4 +1,4 @@
-import OrdersComponent from './OrdersComponent';
+import OrdersComponent from './ordersComponent';
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import InvoiceModal from './InvoiceModal';

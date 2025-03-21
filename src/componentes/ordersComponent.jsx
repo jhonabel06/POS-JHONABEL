@@ -70,6 +70,7 @@ const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateIn
                     Completar
                   </button>
                 )}
+                
                 {orden.estado === 'listo' && (
                   <button
                     onClick={() => onCompleteOrder(orden.orden_id)}
@@ -84,6 +85,14 @@ const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateIn
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     Generar factura
+                  </button>
+                )}
+                {orden.estado === 'pendiente' && (
+                  <button
+                    onClick={() => onGenerateInvoice(orden)}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    Re-imprimir
                   </button>
                 )}
                 {orden.estado === 'pendiente' && (

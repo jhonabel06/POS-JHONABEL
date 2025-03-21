@@ -199,3 +199,14 @@
   width: 100%;
   border-collapse: collapse;
 } */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 1in; /* Ajusta el margen según lo necesites */
+  }
+
+  .invoice-container {
+    padding: 20px; /* Evita que el contenido toque los bordes */
+  }
+}
