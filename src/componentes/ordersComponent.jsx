@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { PlusIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
-const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateInvoice }) => {
+const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateInvoice , onReimprimirInvoice }) => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -89,7 +89,7 @@ const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateIn
                 )}
                 {orden.estado === 'pendiente' && (
                   <button
-                    onClick={() => onGenerateInvoice(orden)}
+                    onClick={() => onReimprimirInvoice(orden)}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     Re-imprimir
@@ -151,6 +151,7 @@ OrdersComponent.propTypes = {
   onCompleteOrder: PropTypes.func.isRequired,
   onPaymentOrder: PropTypes.func.isRequired,
   onGenerateInvoice: PropTypes.func.isRequired,
+  onReimprimirInvoice: PropTypes.func.isRequired,
 };
 
 export default OrdersComponent;

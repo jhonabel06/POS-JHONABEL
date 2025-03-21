@@ -108,6 +108,33 @@ const Orders = () => {
             : order
         )
       );
+
+      // Actualizar estado de mesa
+      const { data, error: selectError } = await supabase
+        .from('ordenes')
+        .select('mesa_id')
+        .eq('orden_id', orderId)
+        .single(); // Usamos .single() porque esperamos un solo resultado
+        if (selectError) {
+          console.error('Error obteniendo mesa_id:', selectError);
+          return;
+        }
+        if (!data) {
+          console.error('No se encontró una mesa para el orderId:', orderId);
+          return;
+        }
+        // Ahora actualizamos el estado de la mesa
+        const { error: updateError } = await supabase
+          .from('mesas')
+          .update({ estado: 'disponible' })
+          .eq('mesa_id', data.mesa_id);
+        if (updateError) {
+          console.error('Error actualizando el estado de la mesa:', updateError);
+        }
+        else {
+          console.log('Mesa actualizada correctamente');
+        }
+
     } catch (err) {
       console.error('Error al completar orden:', err);
       setError(err.message);
@@ -116,6 +143,11 @@ const Orders = () => {
 
   // Función para manejar la generación de factura
   const handleGenerateInvoice = (order) => {
+    setSelectedOrder(order);
+    setShowInvoice(true);
+  };
+  //Funcion para reimprimir la factura
+  const handleReimprimirInvoice = (order) => {
     setSelectedOrder(order);
     setShowInvoice(true);
   };
@@ -140,7 +172,46 @@ const Orders = () => {
     } catch (err) {
       console.error('Error al actualizar estado después de imprimir:', err);
       setError(err.message);
+      // Actualizar estado de mesa
     }
+    try {
+      const { data, error: selectError } = await supabase
+      .from('ordenes')
+      .select('mesa_id')
+      .eq('orden_id', orderId)
+      .single(); // Usamos .single() porque esperamos un solo resultado
+    
+    if (selectError) {
+      console.error('Error obteniendo mesa_id:', selectError);
+      return;
+    }
+    
+    if (!data) {
+      console.error('No se encontró una mesa para el orderId:', orderId);
+      return;
+    }
+    
+    // Ahora actualizamos el estado de la mesa
+    const { error: updateError } = await supabase
+      .from('mesas')
+      .update({ estado: 'pendiente_pago' })
+      .eq('mesa_id', data.mesa_id);
+    
+    if (updateError) {
+      console.error('Error actualizando el estado de la mesa:', updateError);
+    } else {
+      console.log('Mesa actualizada correctamente');
+    }
+        
+
+      if (error) throw error;
+      setShowInvoice(false);
+    } catch (err) {
+      console.error('Problema con la mesa:', err);
+      setError(err.message);
+    }
+
+
   }; 
 
   if (loading) return <div>Cargando órdenes...</div>;
@@ -153,6 +224,7 @@ const Orders = () => {
         onCompleteOrder={handleCompleteOrder}// Pasamos la función como prop
         onPaymentOrder={handlePaymentOrder}// Pasamos la función como prop
         onGenerateInvoice={handleGenerateInvoice}// Pasamos la función como prop
+        onReimprimirInvoice={handleReimprimirInvoice}// Pasamos la función como prop
       />
       
       {showInvoice && selectedOrder && (
