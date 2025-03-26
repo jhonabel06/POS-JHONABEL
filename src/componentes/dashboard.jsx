@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';  
+import { supabase } from '../supabaseClient';
 import { 
     BarChart, 
     Bar, 
@@ -12,7 +14,12 @@ import {
     Tooltip 
   } from 'recharts';
 
-const Dashboard = () => {
+ const Dashboard = () => {
+
+  const [ventasHoy, setVentasHoy] = useState(0);
+  const [ordenesActivas, setordenesActivas] = useState(0);
+
+  const [loading, setLoading] = useState(true);
   // Datos de ejemplo
   const dailySales = [
     { hora: '9 AM', ventas: 20 },
@@ -35,6 +42,62 @@ const Dashboard = () => {
   ];
 
   const COLORS = ['#FF8042', '#00C49F', '#0088FE'];
+
+ 
+    async function fetchVentasHoy() {
+      try {
+        const { data, error } = await supabase.rpc('ventas_hoy');
+        if (error) throw error;
+        return data || 0;
+      } catch (error) {
+        console.error('Error al obtener ventas:', error);
+        return 0;
+      }
+    }
+
+      // Efecto para cargar los datos iniciales
+  useEffect(() => {
+    const loadData = async () => {
+      const ventas = await fetchVentasHoy();
+      setVentasHoy(ventas);
+      console.log(ventas);
+      setLoading(false);
+    };
+    
+    loadData();
+  }, []);
+
+  async function OrdenesActivasCount() {
+    try {
+      const { data, error } = await supabase.rpc('ordenes_activas');
+      if (error) throw error;
+      return data || 0;
+    } catch (error) {
+      console.error('Error al obtener ordenes activas:', error);
+      return 0;
+    }
+  }
+
+    // Efecto para cargar los datos iniciales
+useEffect(() => {
+  const loadData = async () => {
+    const ordenes = await OrdenesActivasCount();
+    setordenesActivas(ordenes);
+    console.log(ordenes);
+    setLoading(false);
+  };
+  
+  loadData();
+}, []);
+
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
+        <div className="animate-pulse text-gray-500">Cargando datos...</div>
+      </div>
+    );
+  }
 
   return (
 <div className="p-6 bg-gray-100 min-h-screen">
@@ -64,7 +127,10 @@ const Dashboard = () => {
               </div>
               <div>
                 <h3 className="text-gray-500 text-sm">Ventas hoy</h3>
-                <p className="text-2xl font-bold text-gray-700">$25000.00</p>
+                <p className="text-2xl font-bold text-gray-700">
+                ${ventasHoy.toFixed(2)}
+                  
+                </p>
               </div>
             </div>
           </div>
@@ -91,7 +157,9 @@ const Dashboard = () => {
               </div>
               <div>
                 <h3 className="text-gray-500 text-sm">Órdenes activas</h3>
-                <p className="text-2xl font-bold text-gray-700">8</p>
+                <p className="text-2xl font-bold text-gray-700">
+                  {ordenesActivas}
+                </p>
               </div>
             </div>
           </div>

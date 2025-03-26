@@ -21,12 +21,13 @@ const InvoiceModal = ({ order, onClose, onAfterPrint }) => {
 
   return (
     <div className="fixed inset-0 bg-blue-500/30 backdrop-blur-sm bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl mx-4 relative">
+      <div className="bg-white rounded-lg shadow-xl sm:max-w-lg mx-4 relative max-h-[90vh] flex flex-col">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
           <X className="w-5 h-5" />
         </button>
-
-        <div className="p-3">
+        {/* La combinación de max-h-[90vh] con overflow-y-auto permite que el contenido se desplace verticalmente cuando excede la 
+        altura disponible, mientras mantiene un margen visual para el fondo difuminado. */}
+        <div className="p-3 overflow-y-auto">
           <Invoice ref={invoiceRef} order={order} />
 
           <div className="mt-6 flex justify-center">

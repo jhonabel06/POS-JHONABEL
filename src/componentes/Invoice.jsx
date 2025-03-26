@@ -16,7 +16,7 @@ const Invoice = forwardRef(({ order }, ref) => {
   return (
     <div ref={ref} className="invoice-container bg-white p-8 max-w-2xl mx-auto print:p-0 print:max-w-none">
       {/* Encabezado */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <div className="flex justify-center mb-4">
           <Receipt className="w-12 h-12 text-teal-600" />
         </div>
