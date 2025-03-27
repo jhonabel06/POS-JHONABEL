@@ -8,11 +8,21 @@ export default function HistorialPagos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtroMetodo, setFiltroMetodo] = useState('');
-  const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]);
-  const [fechaFin, setFechaFin] = useState(new Date().toISOString().split('T')[0]);
+  // const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split('T')[0]);
+  // const [fechaFin, setFechaFin] = useState(new Date().toISOString().split('T')[0]);
+ 
   const [totalPagos, setTotalPagos] = useState(0);
 
-  
+  //fecha local 
+  const getLocalDate = () => {
+    const today = new Date();
+    const offset = today.getTimezoneOffset(); // Diferencia con UTC en minutos
+    const localDate = new Date(today.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+  };
+  const [fechaInicio, setFechaInicio] = useState(getLocalDate());
+  const [fechaFin, setFechaFin] = useState(getLocalDate());
+
   const cargarPagos = async () => {
     try {
       setLoading(true);
@@ -77,6 +87,14 @@ export default function HistorialPagos() {
     setFechaInicio('');
     setFechaFin('');
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
+        <div className="animate-pulse text-gray-500">Cargando datos...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

@@ -92,6 +92,44 @@ const Orders = () => {
   // Función para manejar el pago
   const handlePaymentOrder = async (orderId) => {
     try {
+      const {dataOrder,error:errorTotal} = await supabase
+      .from('ordenes')
+      .select(`
+      orden_id,
+      total
+    `)
+    .eq('orden_id', orderId)
+    .single(); // Usamos .single() porque esperamos un solo resultado
+    if (errorTotal) {
+      console.error('Error obteniendo Total de la orden:', errorTotal);
+      return;
+    }
+    if (!data) {
+      console.error('No se encontró Total para el orderId:', orderId);
+      return;
+    }
+
+
+      const {dataInsert, error: insertError} = await supabase
+      .from('pagos')
+      .insert(
+      [
+        {
+          orden_id: orderId,
+          metodo_pago: 'efectivo',
+          total: parseFloat(dataOrder.total.toFixed(2)) 
+        }
+      ]);
+      setLoading(false);
+
+      if (insertError) {
+        console.error('Error insertando pago:', insertError);
+        alert('Error al registrar el pago');
+      } else {
+        console.log('Pago registrado:', dataInsert);
+        alert('Pago registrado exitosamente');
+      }
+
       // Actualizar en Supabase
       const { error } = await supabase
         .from('ordenes')
@@ -139,6 +177,9 @@ const Orders = () => {
       console.error('Error al completar orden:', err);
       setError(err.message);
     }
+
+
+
   };
 
   // Función para manejar la generación de factura
@@ -214,7 +255,13 @@ const Orders = () => {
 
   }; 
 
-  if (loading) return <div>Cargando órdenes...</div>;
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
+        <div className="animate-pulse text-gray-500">Cargando datos...</div>
+      </div>
+    );
+  }
   if (error) return <div>Error: {error}</div>;
 
   return (
