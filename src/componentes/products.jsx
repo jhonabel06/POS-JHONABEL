@@ -328,7 +328,13 @@ const Products = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
+        <div className="animate-pulse text-gray-500">Cargando datos...</div>
+      </div>
+    );
+  }
   <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
   <h1 className="text-3xl font-bold">Órdenes Recientes</h1>
   <div className="flex gap-2 w-full md:w-auto">
@@ -344,6 +350,7 @@ const Products = () => {
 </div>
 
   return (
+    
     <div className="p-6 max-w-7xl mx-auto">
     {/* <div className="min-h-screen bg-gray-50 p-8"> */}
       {errorMessage && (
