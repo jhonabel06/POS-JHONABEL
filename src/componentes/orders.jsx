@@ -104,7 +104,7 @@ const Orders = () => {
       console.error('Error obteniendo Total de la orden:', errorTotal);
       return;
     }
-    if (!data) {
+    if (!dataOrder) {
       console.error('No se encontró Total para el orderId:', orderId);
       return;
     }
