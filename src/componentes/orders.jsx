@@ -92,43 +92,6 @@ const Orders = () => {
   // Función para manejar el pago
   const handlePaymentOrder = async (orderId) => {
     try {
-      const {dataOrder,error:errorTotal} = await supabase
-      .from('ordenes')
-      .select(`
-      orden_id,
-      total
-    `)
-    .eq('orden_id', orderId)
-    .single(); // Usamos .single() porque esperamos un solo resultado
-    if (errorTotal) {
-      console.error('Error obteniendo Total de la orden:', errorTotal);
-      return;
-    }
-    if (!dataOrder) {
-      console.error('No se encontró Total para el orderId:', orderId);
-      return;
-    }
-
-
-      const {dataInsert, error: insertError} = await supabase
-      .from('pagos')
-      .insert(
-      [
-        {
-          orden_id: orderId,
-          metodo_pago: 'efectivo',
-          total: parseFloat(dataOrder.total.toFixed(2)) 
-        }
-      ]);
-      setLoading(false);
-
-      if (insertError) {
-        console.error('Error insertando pago:', insertError);
-        alert('Error al registrar el pago');
-      } else {
-        console.log('Pago registrado:', dataInsert);
-        alert('Pago registrado exitosamente');
-      }
 
       // Actualizar en Supabase
       const { error } = await supabase
