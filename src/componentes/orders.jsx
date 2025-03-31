@@ -92,6 +92,30 @@ const Orders = () => {
   // Función para manejar el pago
   const handlePaymentOrder = async (orderId) => {
     try {
+      // Obtener el total de la orden
+      const order = orders.find(order => order.orden_id === orderId);
+      if (!order) throw new Error('Orden no encontrada');
+      const total = order.total; // Asumiendo que el total está en la orden
+      // inserter a tabla pagos en Supabase
+      const { error } = await supabase
+        .from('pagos')
+        .insert([
+          {
+            orden_id: orderId,
+            metodo_pago: 'efectivo', // Cambiar según el método de pago
+            total: total,
+            fecha_pago: new Date().toISOString(),
+          },
+        ]);
+      if (error) throw error;
+
+    }
+    catch (error) {
+      console.error('Error al completar orden:', error);
+      setError(error.message);
+    }
+    
+    try {
 
       // Actualizar en Supabase
       const { error } = await supabase
