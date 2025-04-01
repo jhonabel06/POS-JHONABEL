@@ -73,7 +73,7 @@ const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateIn
                 
                 {orden.estado === 'listo' && (
                   <button
-                    onClick={() => onCompleteOrder(orden.orden_id)}
+                  onClick={() => navigate(`/editar-orden/${orden.orden_id}`)} // modificar orden
                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     Modifica Orden

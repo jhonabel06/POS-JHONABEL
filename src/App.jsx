@@ -24,6 +24,7 @@ function App() {
           <Route path="/nueva-orden" element={<NuevaOrden />} />
           <Route path="/products" element={<Products />} />
           <Route path="/HistorialPagos" element={<Payments />} />
+          <Route path="/editar-orden/:ordenId" element={<NuevaOrden isEditing={true} />} />
         </Route>
       </Routes>
     </BrowserRouter>
