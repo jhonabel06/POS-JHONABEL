@@ -24,8 +24,12 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/products" element={<Products />} />
           <Route path="/HistorialPagos" element={<Payments />} />
+<<<<<<< HEAD
           <Route path="/nueva-orden" element={<NuevaOrden />} />
           <Route path="/editar-orden/:ordenId?" element={<NuevaOrden />} />
+=======
+          <Route path="/nueva-orden/:ordenId?" element={<NuevaOrden />} />
+>>>>>>> 8544d1f528e8ce8c1131af1b7c10a89b2d1fe053
         </Route>
       </Routes>
     </BrowserRouter>
