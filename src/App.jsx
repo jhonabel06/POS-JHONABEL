@@ -5,6 +5,7 @@ import Orders from './componentes/orders';
 import Products from './componentes/products';
 import Payments from './componentes/HistorialPagos';
 
+
 // App.js
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RegistrarUsuario from './componentes/registrarUsuario';
@@ -17,14 +18,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<RegistrarUsuario />} />
-        
+      
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/nueva-orden" element={<NuevaOrden />} />
           <Route path="/products" element={<Products />} />
           <Route path="/HistorialPagos" element={<Payments />} />
-          <Route path="/editar-orden/:ordenId" element={<NuevaOrden isEditing={true} />} />
+          <Route path="/nueva-orden/:ordenId?" element={<NuevaOrden />} />
         </Route>
       </Routes>
     </BrowserRouter>

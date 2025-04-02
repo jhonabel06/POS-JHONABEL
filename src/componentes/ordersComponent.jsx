@@ -1,8 +1,16 @@
 import PropTypes from 'prop-types';
 import { PlusIcon, HomeIcon } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateInvoice , onReimprimirInvoice }) => {
+
+const OrdersComponent = ({ 
+  orders, 
+  onCompleteOrder, 
+  onPaymentOrder, 
+  onGenerateInvoice , 
+  onReimprimirInvoice 
+}) => {
+  const navigate = useNavigate(); // Añadir hook de navegación
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -73,7 +81,7 @@ const OrdersComponent = ({ orders, onCompleteOrder, onPaymentOrder, onGenerateIn
                 
                 {orden.estado === 'listo' && (
                   <button
-                  onClick={() => navigate(`/editar-orden/${orden.orden_id}`)} // modificar orden
+                  onClick={() => navigate(`/nueva-orden/${orden.orden_id}`)} // modificar orden
                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     Modifica Orden
