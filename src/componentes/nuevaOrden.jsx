@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Square3Stack3DIcon, HomeIcon } from '@heroicons/react/24/outline';
 
 export default function NuevaOrden() {
+  const { ordenId } = useParams();
+  const navigate = useNavigate();
+  const isEditing = !!ordenId;
   // Estados iniciales
   const [orden, setOrden] = useState({
     mesa_id: null,
@@ -13,6 +16,7 @@ export default function NuevaOrden() {
   });
 
   const [items, setItems] = useState([]);
+  const [originalItems, setOriginalItems] = useState([]);
   const [mesasDisponibles, setMesasDisponibles] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,6 +27,61 @@ export default function NuevaOrden() {
   const filteredProducts = productos.filter(producto => 
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  useEffect(() => {
+    const cargarDatosIniciales = async () => {
+      try {
+        // Cargar productos y mesas disponibles
+        const [mesasRes, productosRes] = await Promise.all([
+          supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
+          supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+        ]);
+
+        if (mesasRes.error) throw mesasRes.error;
+        if (productosRes.error) throw productosRes.error;
+
+        setMesasDisponibles(mesasRes.data);
+        setProductos(productosRes.data);
+
+        // Si estamos editando, cargar la orden existente
+        if (isEditing) {
+          const [
+            { data: ordenData, error: ordenError },
+            { data: detallesData, error: detallesError }
+          ] = await Promise.all([
+            supabase.from('ordenes').select('*').eq('orden_id', ordenId).single(),
+            supabase.from('detalles_orden').select('producto_id, cantidad, precio_unitario').eq('orden_id', ordenId)
+          ]);
+
+          if (ordenError) throw ordenError;
+          if (detallesError) throw detallesError;
+
+          const itemsTransformados = detallesData.map(item => ({
+            producto_id: item.producto_id,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio_unitario,
+            subtotal: item.cantidad * item.precio_unitario
+          }));
+
+          setOrden({
+            mesa_id: ordenData.mesa_id,
+            usuario_id: ordenData.usuario_id,
+            estado: 'en_proceso',
+            total: ordenData.total
+          });
+
+          setItems(itemsTransformados);
+          setOriginalItems(itemsTransformados);
+        }
+      } catch (error) {
+        setError(error.message);
+        if (isEditing) {
+          navigate('/orders', { replace: true });
+        }
+      }
+    };
+
+    cargarDatosIniciales();
+  }, [ordenId, isEditing, navigate]);
 
   // Agregar producto con click
   const handleAddProduct = (producto) => {
@@ -49,27 +108,27 @@ export default function NuevaOrden() {
     });
   };
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    const cargarDatosIniciales = async () => {
-      try {
-        const [mesasRes, productosRes] = await Promise.all([
-          supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
-          supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
-        ]);
+  // // Cargar datos iniciales
+  // useEffect(() => {
+  //   const cargarDatosIniciales = async () => {
+  //     try {
+  //       const [mesasRes, productosRes] = await Promise.all([
+  //         supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
+  //         supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+  //       ]);
 
-        if (mesasRes.error) throw mesasRes.error;
-        if (productosRes.error) throw productosRes.error;
+  //       if (mesasRes.error) throw mesasRes.error;
+  //       if (productosRes.error) throw productosRes.error;
 
-        setMesasDisponibles(mesasRes.data);
-        setProductos(productosRes.data);
-      } catch (error) {
-        setError(error.message);
-      }
-    };
+  //       setMesasDisponibles(mesasRes.data);
+  //       setProductos(productosRes.data);
+  //     } catch (error) {
+  //       setError(error.message);
+  //     }
+  //   };
 
-    cargarDatosIniciales();
-  }, []);
+  //   cargarDatosIniciales();
+  // }, []);
 
   // Actualizar total
   useEffect(() => {
@@ -99,6 +158,8 @@ export default function NuevaOrden() {
       return newItems;
     });
   };
+
+
 // 1. Corrige el reset del formulario en handleSubmit
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -106,71 +167,98 @@ const handleSubmit = async (e) => {
   setError('');
 
   try {
-    // Validación mejorada de stock
-    const stockErrors = items.reduce((errors, item) => {
-      const producto = productos.find(p => p.producto_id === item.producto_id);
-      if (!producto) {
-        errors.push(`Producto no encontrado`);
-      } else if (producto.stock < item.cantidad) {
-        errors.push(`Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`);
+      // Validación de stock (considera edición)
+      const stockErrors = [];
+      for (const item of items) {
+        const producto = productos.find(p => p.producto_id === item.producto_id);
+        if (!producto) {
+          stockErrors.push(`Producto no encontrado`);
+          continue;
+        }
+
+        if (isEditing) {
+          const originalItem = originalItems.find(oi => oi.producto_id === item.producto_id);
+          const diferencia = item.cantidad - (originalItem?.cantidad || 0);
+          if (diferencia > 0 && diferencia > producto.stock) {
+            stockErrors.push(`Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`);
+          }
+        } else if (producto.stock < item.cantidad) {
+          stockErrors.push(`Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`);
+        }
       }
-      return errors;
-    }, []);
 
-    if (stockErrors.length > 0) {
-      throw new Error(stockErrors.join('\n'));
+      if (stockErrors.length > 0) {
+        throw new Error(stockErrors.join('\n'));
+      }
+
+      if (isEditing) {
+        // Lógica de edición con nueva función
+        const updates = await supabase.rpc('actualizar_orden_completa', {
+          orden_id: ordenId,
+          items: items.map(item => ({
+            producto_id: item.producto_id,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio_unitario,
+            subtotal:item.cantidad * item.precio_unitario
+          })),
+          nueva_mesa_id: orden.mesa_id
+        });        
+        if (updates.error) throw updates.error;
+        alert('¡Orden actualizada exitosamente!');
+        navigate('/orders');
+
+      } else {
+        // Lógica original para nueva orden
+        const { data: ordenData, error: ordenError } = await supabase
+          .from('ordenes')
+          .insert([{ 
+            ...orden, 
+            total: parseFloat(orden.total.toFixed(2)) 
+          }])
+          .select();
+
+        if (ordenError) throw ordenError;
+
+        const updates = await supabase.rpc('crear_orden_completa', {
+          orden_id: ordenData[0].orden_id,
+          items: items.map(item => ({
+            producto_id: item.producto_id,
+            cantidad: item.cantidad,
+            precio: item.precio_unitario
+          })),
+          mesa_id: orden.mesa_id
+        });
+
+        if (updates.error) throw updates.error;
+
+        // Resetear formulario
+        setOrden({
+          mesa_id: null,
+          usuario_id: null,
+          estado: 'en_proceso',
+          total: 0.00
+        });
+        setItems([]);
+        alert('¡Orden creada exitosamente!');
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error: averrrrrrrr', err);
+      
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Insertar orden con transacción
-    const { data: ordenData, error: ordenError } = await supabase
-      .from('ordenes')
-      .insert([{ 
-        ...orden, 
-        total: parseFloat(orden.total.toFixed(2)) 
-      }])
-      .select();
-
-    if (ordenError) throw ordenError;
-
-    // Insertar detalles y actualizar stock
-    const updates = await supabase.rpc('crear_orden_completa', {
-      orden_id: ordenData[0].orden_id,
-      items: items.map(item => ({
-        producto_id: item.producto_id,
-        cantidad: item.cantidad,
-        precio: item.precio_unitario
-      })),
-      mesa_id: orden.mesa_id
-    });
-
-    if (updates.error) throw updates.error;
-
-    // Resetear formulario correctamente
-    setOrden({
-      mesa_id: null,
-      usuario_id: null,
-      estado: 'en_proceso',
-      total: 0.00
-    });
-    setItems([]);
-    //setNecesitaActualizar(true);
-    
-    alert('Orden creada exitosamente!');
-
-  } catch (err) {
-    setError(err.message);
-    console.error('Error:', err);
-  } finally {
-    setLoading(false);
-  }
-};
 //TODO: px-4 py-2 rounded-4xl hover:bg-teal-400
 return (
   <div className="min-h-screen bg-gray-50 p-4">
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">Nueva Orden</h1>
+        <h1 className="text-3xl font-bold">
+        {isEditing ? 'Editar Orden' : 'Nueva Orden'}
+          </h1>
         <div className="flex gap-2 w-full md:w-auto">
           <Link to="/dashboard" className="btn-primary flex items-center px-4 py-2 rounded-4xl hover:bg-teal-400">
             <HomeIcon className="w-5 h-5 mr-2" />
@@ -332,7 +420,7 @@ return (
                 disabled={loading || items.length === 0}
                 className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-400 transition-colors"
               >
-                {loading ? 'Procesando...' : 'Confirmar Orden'}
+                {loading ? 'Procesando...' : (isEditing ? 'Actualizar Orden' : 'Confirmar Orden')}
               </button>
             </div>
           </form>
