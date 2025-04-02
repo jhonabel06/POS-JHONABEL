@@ -24,7 +24,8 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/products" element={<Products />} />
           <Route path="/HistorialPagos" element={<Payments />} />
-          <Route path="/nueva-orden/:ordenId?" element={<NuevaOrden />} />
+          <Route path="/nueva-orden" element={<NuevaOrden />} />
+          <Route path="/editar-orden/:ordenId?" element={<NuevaOrden />} />
         </Route>
       </Routes>
     </BrowserRouter>
