@@ -31,80 +31,145 @@ export default function NuevaOrden() {
     const cargarDatosIniciales = async () => {
       try {
         // Cargar productos y mesas disponibles
-        const [mesasRes, productosRes] = await Promise.all([
-          supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
-          supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
-        ]);
+        let mesasRes, productosRes;
+        // Si estamos editando, cargar solo mesas disponibles y productos
+        if (isEditing) {
+          [mesasRes, productosRes] = await Promise.all([
+            supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
+            supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+          ]);
+        } else {
+          [mesasRes, productosRes] = await Promise.all([
+            supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
+            supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+          ]);
+        }
 
-        if (mesasRes.error) throw mesasRes.error;
-        if (productosRes.error) throw productosRes.error;
 
+        if (mesasRes.error) throw new Error(`Error cargando mesas: ${mesasRes.error.message}`);
+        if (productosRes.error) throw new Error(`Error cargando productos: ${productosRes.error.message}`);
+  
         setMesasDisponibles(mesasRes.data);
         setProductos(productosRes.data);
-
+  
         // Si estamos editando, cargar la orden existente
         if (isEditing) {
-          const [
-            { data: ordenData, error: ordenError },
-            { data: detallesData, error: detallesError }
-          ] = await Promise.all([
-            supabase.from('ordenes').select('*').eq('orden_id', ordenId).single(),
-            supabase.from('detalles_orden').select('producto_id, cantidad, precio_unitario').eq('orden_id', ordenId)
-          ]);
-
-          if (ordenError) throw ordenError;
-          if (detallesError) throw detallesError;
-
-          const itemsTransformados = detallesData.map(item => ({
+          const [{ data: ordenData, error: ordenError }, { data: detallesData, error: detallesError }] =
+            await Promise.all([
+              supabase.from('ordenes').select('*').eq('orden_id', ordenId).single(),
+              supabase.from('detalles_orden').select('*').eq('orden_id', ordenId)
+            ]);
+  
+          if (ordenError) throw new Error(`Error cargando orden: ${ordenError.message}`);
+          if (detallesError) throw new Error(`Error cargando detalles: ${detallesError.message}`);
+  
+          console.log('detallesData', detallesData);
+          console.log('ordenData', ordenData);
+  
+          const itemsTransformados = detallesData?.map(item => ({
             producto_id: item.producto_id,
             cantidad: item.cantidad,
             precio_unitario: item.precio_unitario,
             subtotal: item.cantidad * item.precio_unitario
-          }));
-
+          })) || [];
+  
           setOrden({
             mesa_id: ordenData.mesa_id,
             usuario_id: ordenData.usuario_id,
             estado: 'en_proceso',
             total: ordenData.total
           });
-
+  
           setItems(itemsTransformados);
           setOriginalItems(itemsTransformados);
         }
       } catch (error) {
+        console.error('Error en cargarDatosIniciales:', error);
         setError(error.message);
-        if (isEditing) {
-          navigate('/orders', { replace: true });
-        }
+  
+        // if (isEditing) {
+        //   setTimeout(() => {
+        //     navigate('/orders', { replace: true });
+        //   }, 2000); // Espera 2s antes de redirigir para permitir ver el error
+        // }
       }
     };
-
+  
     cargarDatosIniciales();
-  }, [ordenId, isEditing, navigate]);
+  }, [ordenId, isEditing, navigate]); 
+  
+
+  // useEffect(() => {
+  //   const channel = supabase
+  //     .channel('productos')
+  //     .on('postgres_changes', {
+  //       event: 'UPDATE',
+  //       schema: 'public',
+  //       table: 'productos'
+  //     }, () => {
+  //       // Recarga productos para tener stock actualizado
+  //       supabase.from('productos').select('*')
+  //         .then(({ data }) => setProductos(data));
+  //     })
+  //     .subscribe();
+  
+  //   return () => supabase.removeChannel(channel);
+  // }, []);
 
   // Agregar producto con click
+  // const handleAddProduct = (producto) => {
+  //   if (producto.stock < 1) return;
+
+  //   setItems(prevItems => {
+  //     const existingIndex = prevItems.findIndex(item => item.producto_id === producto.producto_id);
+      
+  //     if (existingIndex !== -1) {
+  //       const updatedItems = [...prevItems];
+  //       if (updatedItems[existingIndex].cantidad >= producto.stock) return prevItems;
+        
+  //       updatedItems[existingIndex].cantidad += 1;
+  //       updatedItems[existingIndex].subtotal = updatedItems[existingIndex].cantidad * producto.precio;
+  //       return updatedItems;
+  //     }
+      
+  //     return [...prevItems, {
+  //       producto_id: producto.producto_id,
+  //       cantidad: 1,
+  //       precio_unitario: producto.precio,
+  //       subtotal: producto.precio
+  //     }];
+  //   });
+  // };
+
   const handleAddProduct = (producto) => {
     if (producto.stock < 1) return;
-
-    setItems(prevItems => {
-      const existingIndex = prevItems.findIndex(item => item.producto_id === producto.producto_id);
-      
+  
+    setItems((prevItems) => {
+      const existingIndex = prevItems.findIndex(
+        (item) => item.producto_id === producto.producto_id
+      );
+  
       if (existingIndex !== -1) {
-        const updatedItems = [...prevItems];
-        if (updatedItems[existingIndex].cantidad >= producto.stock) return prevItems;
-        
-        updatedItems[existingIndex].cantidad += 1;
-        updatedItems[existingIndex].subtotal = updatedItems[existingIndex].cantidad * producto.precio;
+        // Crear una copia nueva del array y del objeto en cuestión
+        const updatedItems = prevItems.map((item) => ({ ...item }));
+        const existingItem = updatedItems[existingIndex];
+  
+        if (existingItem.cantidad >= producto.stock) return prevItems;
+  
+        existingItem.cantidad += 1;
+        existingItem.subtotal = existingItem.cantidad * producto.precio;
         return updatedItems;
       }
-      
-      return [...prevItems, {
-        producto_id: producto.producto_id,
-        cantidad: 1,
-        precio_unitario: producto.precio,
-        subtotal: producto.precio
-      }];
+  
+      return [
+        ...prevItems,
+        {
+          producto_id: producto.producto_id,
+          cantidad: 1,
+          precio_unitario: producto.precio,
+          subtotal: producto.precio,
+        },
+      ];
     });
   };
 
@@ -130,6 +195,7 @@ export default function NuevaOrden() {
   //   cargarDatosIniciales();
   // }, []);
 
+  
   // Actualizar total
   useEffect(() => {
     const nuevoTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -153,8 +219,10 @@ export default function NuevaOrden() {
       
       if (newQuantity < 1 || newQuantity > product.stock) return prev;
       
+      // Actualiza el precio unitario por si cambió
+      newItems[index].precio_unitario = product.precio;
       newItems[index].cantidad = newQuantity;
-      newItems[index].subtotal = newQuantity * newItems[index].precio_unitario;
+      newItems[index].subtotal = newQuantity * product.precio;
       return newItems;
     });
   };
@@ -168,24 +236,21 @@ const handleSubmit = async (e) => {
 
   try {
       // Validación de stock (considera edición)
-      const stockErrors = [];
-      for (const item of items) {
+      const stockErrors = items.map(item => {
         const producto = productos.find(p => p.producto_id === item.producto_id);
-        if (!producto) {
-          stockErrors.push(`Producto no encontrado`);
-          continue;
-        }
-
+        if (!producto) return `Producto no encontrado`;
+      
         if (isEditing) {
           const originalItem = originalItems.find(oi => oi.producto_id === item.producto_id);
           const diferencia = item.cantidad - (originalItem?.cantidad || 0);
           if (diferencia > 0 && diferencia > producto.stock) {
-            stockErrors.push(`Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`);
+            return `Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`;
           }
         } else if (producto.stock < item.cantidad) {
-          stockErrors.push(`Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`);
+          return `Stock insuficiente para ${producto.nombre} (disponible: ${producto.stock})`;
         }
-      }
+        return null;
+      }).filter(Boolean);
 
       if (stockErrors.length > 0) {
         throw new Error(stockErrors.join('\n'));
@@ -332,17 +397,21 @@ return (
                 <label className="block mb-2 font-medium">Mesa:</label>
                 <select
                   name="mesa_id"
-                  value={orden.mesa_id || ''}
-                  onChange={(e) => setOrden({...orden, mesa_id: e.target.value})}
+                  value={orden.mesa_id ? String(orden.mesa_id) : ''}
+                  onChange={(e) => setOrden({...orden, mesa_id: Number(e.target.value)})}
                   className="w-full p-2 border rounded"
                   required
                 >
                   <option value="">Seleccionar mesa</option>
+
+                  
                   {mesasDisponibles.map(mesa => (
-                    <option key={mesa.mesa_id} value={mesa.mesa_id}>
+                    <option key={mesa.mesa_id} value={String(mesa.mesa_id)}>
                       Mesa {mesa.mesa_id}
                     </option>
+                    
                   ))}
+                  {console.log('mesa', orden.mesa_id)}
                 </select>
               </div>
             </div>
@@ -372,6 +441,7 @@ return (
                             <h4 className="font-medium">{producto?.nombre}</h4>
                             <div className="flex items-center gap-2 mt-1">
                               <button
+                                type="button"
                                 onClick={() => adjustQuantity(index, -1)}
                                 className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
                               >
@@ -381,6 +451,7 @@ return (
                                 {item.cantidad}
                               </span>
                               <button
+                                type="button"
                                 onClick={() => adjustQuantity(index, 1)}
                                 disabled={item.cantidad >= producto?.stock}
                                 className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center"
@@ -393,6 +464,7 @@ return (
                         <div className="flex items-center gap-4">
                           <span className="font-medium">${item.subtotal?.toFixed(2)}</span>
                           <button
+                            type="button"
                             onClick={() => removeItem(index)}
                             className="text-red-500 hover:text-red-700 p-1"
                           >
