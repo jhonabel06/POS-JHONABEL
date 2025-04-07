@@ -44,7 +44,9 @@ function App() {
 
       
         <Route element={
+          <ProtectedRoute>
           <Layout />
+          </ProtectedRoute>
           }>
           <Route path="/dashboard" element={
             <ProtectedRoute>
@@ -77,7 +79,11 @@ function App() {
             </ProtectedRoute>
             } />
 
-          <Route path="*" element={<Login />} />
+          <Route path="*" element={
+            <PublicRoute>
+            <Login />
+            </PublicRoute>
+            } />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -22,7 +22,12 @@ export const PublicRoute = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, []);
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return (
+    <div className="p-6 bg-gray-100 min-h-screen flex justify-center items-center">
+    <div className="animate-pulse text-gray-500">Cargando datos...</div>
+  </div>
+
+  );
   return !session ? children : <Navigate to="/dashboard" state={{ from: location }} replace />;
 
 };

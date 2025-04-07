@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import NuevaOrden from './nuevaOrden';
+import { NuevaOrden } from './nuevaOrden';
 
 export default function EditarOrden() {
   const { ordenId } = useParams();
