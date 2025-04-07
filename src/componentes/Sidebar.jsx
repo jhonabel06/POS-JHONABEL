@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import LogoutButton from './LogoutButton.jsx';
 
 const Sidebar = () => {
   return (
@@ -52,6 +53,13 @@ const Sidebar = () => {
             >
               Productos
             </NavLink>
+          </li>
+          <li>
+            <LogoutButton 
+              className="block w-full rounded-lg p-3 text-left text-gray-300 transition-colors hover:bg-gray-700"
+            >
+              Cerrar sesión
+            </LogoutButton>
           </li>
         </ul>
       </nav>
