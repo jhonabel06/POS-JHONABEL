@@ -15,6 +15,8 @@ export default function NuevaOrden() {
     total: 0.00
   });
 
+
+
   const [items, setItems] = useState([]);
   const [originalItems, setOriginalItems] = useState([]);
   const [mesasDisponibles, setMesasDisponibles] = useState([]);
@@ -27,16 +29,25 @@ export default function NuevaOrden() {
   const filteredProducts = productos.filter(producto => 
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       try {
         // Cargar productos y mesas disponibles
-        let mesasRes, productosRes;
+        let mesasRes, productosRes, ordenRes;
         // Si estamos editando, cargar solo mesas disponibles y productos
         if (isEditing) {
-          [mesasRes, productosRes] = await Promise.all([
+          [mesasRes, productosRes, ordenRes] = await Promise.all([
             supabase.from('mesas').select('mesa_id').eq('estado', 'disponible'),
-            supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url')
+            supabase.from('productos').select('producto_id, nombre, precio, stock, imagen_url'),
+            supabase
+            .from('ordenes')
+            .select(`
+              *,
+              mesas (*)  
+            `)
+            .eq('orden_id', ordenId)
+            .single()
           ]);
         } else {
           [mesasRes, productosRes] = await Promise.all([
@@ -48,8 +59,22 @@ export default function NuevaOrden() {
 
         if (mesasRes.error) throw new Error(`Error cargando mesas: ${mesasRes.error.message}`);
         if (productosRes.error) throw new Error(`Error cargando productos: ${productosRes.error.message}`);
-  
-        setMesasDisponibles(mesasRes.data);
+        if (isEditing && ordenRes.error) throw new Error(`Error cargando orden: ${ordenRes.error.message}`);
+
+        // Combinar mesas disponibles con la mesa de la orden (si existe y no está ya en la lista)
+        const mesasDisponibles = mesasRes.data || [];
+        const mesaDeLaOrden = ordenRes?.data?.mesas;
+        
+        // Crear un Set para evitar duplicados
+        const mesaIds = new Set(mesasDisponibles.map(mesa => mesa.mesa_id));
+
+         // Si la mesa de la orden existe y no está en las disponibles, agregarla
+        if (mesaDeLaOrden && !mesaIds.has(mesaDeLaOrden.mesa_id)) {
+          mesasDisponibles.push(mesaDeLaOrden);
+        }
+      
+        // Actualizar estados
+        setMesasDisponibles(mesasDisponibles);
         setProductos(productosRes.data);
   
         // Si estamos editando, cargar la orden existente
@@ -142,6 +167,9 @@ export default function NuevaOrden() {
   // };
 
   const handleAddProduct = (producto) => {
+
+    console.log('handleAddProduct llamado', producto.producto_id);
+
     if (producto.stock < 1) return;
   
     setItems((prevItems) => {
@@ -209,7 +237,9 @@ export default function NuevaOrden() {
 
   // Ajustar cantidad
   const adjustQuantity = (index, adjustment) => {
+    console.log('adjustQuantity llamado', index, adjustment);
     setItems(prev => {
+      
       const newItems = [...prev];
       const product = productos.find(p => p.producto_id === newItems[index].producto_id);
       
@@ -353,6 +383,7 @@ return (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 h-[calc(100vh-300px)] overflow-y-auto">
             {filteredProducts.map(producto => (
               <button
+                type="button"
                 key={producto.producto_id}
                 onClick={() => handleAddProduct(producto)}
                 disabled={producto.stock < 1}
