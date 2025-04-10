@@ -289,12 +289,11 @@ const handleSubmit = async (e) => {
       if (isEditing) {
         // Lógica de edición con nueva función
         const updates = await supabase.rpc('actualizar_orden_completa', {
-          orden_id: ordenId,
+          p_orden_id: ordenId,
           items: items.map(item => ({
             producto_id: item.producto_id,
             cantidad: item.cantidad,
-            precio_unitario: item.precio_unitario,
-            subtotal:item.cantidad * item.precio_unitario
+            precio_unitario: item.precio_unitario
           })),
           nueva_mesa_id: orden.mesa_id
         });        
