@@ -166,11 +166,57 @@ export default function NuevaOrden() {
   //   });
   // };
 
+// Agregar producto con click
+  // const handleAddProduct = (producto) => {
+
+  //   console.log('handleAddProduct llamado', producto.producto_id);
+
+  //   if (producto.stock < 1) return;
+  
+  //   setItems((prevItems) => {
+  //     const existingIndex = prevItems.findIndex(
+  //       (item) => item.producto_id === producto.producto_id
+  //     );
+  
+  //     if (existingIndex !== -1) {
+  //       // Crear una copia nueva del array y del objeto en cuestión
+  //       const updatedItems = prevItems.map((item) => ({ ...item }));
+  //       const existingItem = updatedItems[existingIndex];
+  
+  //       if (existingItem.cantidad >= producto.stock) return prevItems;
+  
+  //       existingItem.cantidad += 1;
+  //       existingItem.subtotal = existingItem.cantidad * producto.precio;
+  //       return updatedItems;
+  //     }
+  
+  //     return [
+  //       ...prevItems,
+  //       {
+  //         producto_id: producto.producto_id,
+  //         cantidad: 1,
+  //         precio_unitario: producto.precio,
+  //         subtotal: producto.precio,
+  //       },
+  //     ];
+  //   });
+  // };
+
   const handleAddProduct = (producto) => {
-
     console.log('handleAddProduct llamado', producto.producto_id);
-
-    if (producto.stock < 1) return;
+  
+    let availableStock = producto.stock;
+  
+    if (isEditing) {
+      const originalItem = originalItems.find(oi => oi.producto_id === producto.producto_id);
+      if (originalItem) {
+        availableStock = originalItem.cantidad + producto.stock;
+      } else {
+        availableStock = producto.stock;
+      }
+    }
+  
+    if (availableStock < 1) return;
   
     setItems((prevItems) => {
       const existingIndex = prevItems.findIndex(
@@ -178,11 +224,10 @@ export default function NuevaOrden() {
       );
   
       if (existingIndex !== -1) {
-        // Crear una copia nueva del array y del objeto en cuestión
-        const updatedItems = prevItems.map((item) => ({ ...item }));
+        const updatedItems = prevItems.map(item => ({ ...item }));
         const existingItem = updatedItems[existingIndex];
   
-        if (existingItem.cantidad >= producto.stock) return prevItems;
+        if (existingItem.cantidad >= availableStock) return prevItems;
   
         existingItem.cantidad += 1;
         existingItem.subtotal = existingItem.cantidad * producto.precio;
@@ -236,20 +281,50 @@ export default function NuevaOrden() {
   };
 
   // Ajustar cantidad
+  // const adjustQuantity = (index, adjustment) => {
+  //   console.log('adjustQuantity llamado', index, adjustment);
+  //   setItems(prev => {
+      
+  //     const newItems = [...prev];
+  //     const product = productos.find(p => p.producto_id === newItems[index].producto_id);
+      
+  //     if (!product) return prev;
+      
+  //     const newQuantity = newItems[index].cantidad + adjustment;
+      
+  //     if (newQuantity < 1 || newQuantity > product.stock) return prev;
+      
+  //     // Actualiza el precio unitario por si cambió
+  //     newItems[index].precio_unitario = product.precio;
+  //     newItems[index].cantidad = newQuantity;
+  //     newItems[index].subtotal = newQuantity * product.precio;
+  //     return newItems;
+  //   });
+  // };
   const adjustQuantity = (index, adjustment) => {
     console.log('adjustQuantity llamado', index, adjustment);
     setItems(prev => {
-      
       const newItems = [...prev];
-      const product = productos.find(p => p.producto_id === newItems[index].producto_id);
+      const currentItem = newItems[index];
+      const product = productos.find(p => p.producto_id === currentItem.producto_id);
       
       if (!product) return prev;
       
-      const newQuantity = newItems[index].cantidad + adjustment;
+      const newQuantity = currentItem.cantidad + adjustment;
       
-      if (newQuantity < 1 || newQuantity > product.stock) return prev;
+      // Determinar la cantidad máxima según modo edición
+      let maxQuantity;
+      if (isEditing) {
+        const originalItem = originalItems.find(oi => oi.producto_id === currentItem.producto_id);
+        const originalCantidad = originalItem ? originalItem.cantidad : 0;
+        maxQuantity = originalCantidad + product.stock;
+      } else {
+        maxQuantity = product.stock;
+      }
       
-      // Actualiza el precio unitario por si cambió
+      if (newQuantity < 1 || newQuantity > maxQuantity) return prev;
+      
+      // Actualizar precio y subtotal
       newItems[index].precio_unitario = product.precio;
       newItems[index].cantidad = newQuantity;
       newItems[index].subtotal = newQuantity * product.precio;
@@ -473,7 +548,8 @@ return (
                               <button
                                 type="button"
                                 onClick={() => adjustQuantity(index, -1)}
-                                className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                                disabled={item.cantidad <= 1}
+                                className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center"
                               >
                                 -
                               </button>
@@ -483,7 +559,11 @@ return (
                               <button
                                 type="button"
                                 onClick={() => adjustQuantity(index, 1)}
-                                disabled={item.cantidad >= producto?.stock}
+                                disabled={
+                                  isEditing 
+                                    ? item.cantidad >= ((originalItems.find(oi => oi.producto_id === item.producto_id)?.cantidad || 0) + producto?.stock
+                                    ) : item.cantidad >= producto?.stock
+                                }
                                 className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 disabled:opacity-50 flex items-center justify-center"
                               >
                                 +
