@@ -4,6 +4,7 @@ import Dashboard from './componentes/dashboard';
 import Orders from './componentes/orders';
 import Products from './componentes/products';
 import Payments from './componentes/HistorialPagos';
+import ConfiguracionGeneral from './componentes/configuracionGeneral';
 
 
 // App.js
@@ -76,6 +77,11 @@ function App() {
           <Route path="/editar-orden/:ordenId?" element={
             <ProtectedRoute>
             <NuevaOrden />
+            </ProtectedRoute>
+            } />
+          <Route path="/Configuracion-General" element={
+            <ProtectedRoute>
+            <ConfiguracionGeneral />            
             </ProtectedRoute>
             } />
 

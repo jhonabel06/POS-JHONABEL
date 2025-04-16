@@ -55,6 +55,18 @@ const Sidebar = () => {
             </NavLink>
           </li>
           <li>
+            <NavLink
+              to="/Configuracion-General"
+              className={({ isActive }) => 
+                `block rounded-lg p-3 transition-colors hover:bg-gray-700 ${
+                  isActive ? 'bg-blue-600 text-white' : 'text-gray-300'
+                }`
+              }
+            >
+              Configuración
+            </NavLink>
+          </li>
+          <li>
             <LogoutButton 
               className="block w-full rounded-lg p-3 text-left text-gray-300 transition-colors hover:bg-gray-700"
             >
