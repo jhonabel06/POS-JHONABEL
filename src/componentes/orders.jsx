@@ -3,6 +3,17 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import InvoiceModal from './InvoiceModal';
 
+const itbis = await supabase
+  .from('configuracion_general')
+  .select('itbis_porcentaje') 
+  .single()
+  .then(({ data }) => data.itbis_porcentaje) // Asignar el valor de itbis a una variable
+  .catch((error) => { 
+    console.error('Error al obtener el valor de itbis:', error);
+    return 0; // Valor por defecto en caso de error
+  }
+);
+
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +114,8 @@ const Orders = () => {
           {
             orden_id: orderId,
             metodo_pago: 'efectivo', // Cambiar según el método de pago
-            total: total,
+            itbis: (itbis*total)/100, // Cambiar según el ITBIS
+            total: total+((itbis*total)/100), // Cambiar según el total
             fecha_pago: new Date().toISOString(),
           },
         ]);

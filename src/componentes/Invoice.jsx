@@ -1,6 +1,18 @@
 import { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import { Receipt } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+
+const itbis = await supabase
+  .from('configuracion_general')
+  .select('itbis_porcentaje') 
+  .single()
+  .then(({ data }) => data.itbis_porcentaje) // Asignar el valor de itbis a una variable
+  .catch((error) => { 
+    console.error('Error al obtener el valor de itbis:', error);
+    return 0; // Valor por defecto en caso de error
+  }
+);
 
 const Invoice = forwardRef(({ order }, ref) => {
   const formatDate = (dateString) => {
@@ -65,14 +77,23 @@ const Invoice = forwardRef(({ order }, ref) => {
           ))}
         </tbody>
       </table>
-
-      {/* Total */}
-      <div className="border-t-2 border-gray-200 pt-4">
+        {/* itbis */}
+        <div className="border-t-2 border-gray-200 pt-4">
         <div className="flex justify-between items-center">
-          <span className="font-bold text-lg">Total:</span>
-          <span className="font-bold text-lg">${order.total.toFixed(2)}</span>
+          <span className="text-lg">Itbis:</span>
+          <span className="text-lg">${(order.total.toFixed(2)*itbis)/100}</span>
         </div>
       </div>
+
+      {/* Total */}
+        <div className="flex justify-between items-center">
+          <span className="font-bold text-lg">Total:</span>
+          <span className="font-bold text-lg">$
+            {
+              parseFloat(order.total.toFixed(2)) + parseFloat((order.total.toFixed(2)*itbis)/100)
+            }</span>
+        </div>
+
 
       {/* Pie de página */}
       <div className="mt-2 text-center text-gray-500 text-sm">
