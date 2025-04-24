@@ -11,6 +11,7 @@ export default function NuevaOrden() {
   const [orden, setOrden] = useState({
     mesa_id: null,
     usuario_id: null,
+    tipo_orden: 1,
     estado: 'en_proceso',
     total: 0.00
   });
@@ -102,6 +103,7 @@ export default function NuevaOrden() {
             mesa_id: ordenData.mesa_id,
             usuario_id: ordenData.usuario_id,
             estado: 'en_proceso',
+            tipo_orden: ordenData.tipo_orden,
             total: ordenData.total
           });
   
@@ -497,29 +499,56 @@ return (
         {/* Sección de la orden */}
         <div className="bg-white p-4 rounded-xl shadow-sm sticky top-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <label className="block mb-2 font-medium">Mesa:</label>
-                <select
-                  name="mesa_id"
-                  value={orden.mesa_id ? String(orden.mesa_id) : ''}
-                  onChange={(e) => setOrden({...orden, mesa_id: Number(e.target.value)})}
-                  className="w-full p-2 border rounded"
-                  required
-                >
-                  <option value="">Seleccionar mesa</option>
-
-                  
-                  {mesasDisponibles.map(mesa => (
-                    <option key={mesa.mesa_id} value={String(mesa.mesa_id)}>
-                      Mesa {mesa.mesa_id}
-                    </option>
-                    
-                  ))}
-                  {console.log('mesa', orden.mesa_id)}
-                </select>
+          <div className="grid gap-4">
+            <div className="flex flex-col gap-2">
+              {/* Radio buttons para tipo de orden */}
+              <div className="flex gap-4 mb-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="orderType"
+                    value="1"
+                    checked={orden.tipo_orden === 1}
+                    onChange={() => setOrden({...orden, tipo_orden: 1})}
+                    className="form-radio"
+                  />
+                  Comer aquí
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="orderType"
+                    value="2"
+                    checked={orden.tipo_orden === 2}
+                    onChange={() => setOrden({...orden, tipo_orden: 2, mesa_id: null})}
+                    className="form-radio"
+                  />
+                  Llevar
+                </label>
               </div>
+
+              {/* Selector de mesa solo visible para "comer aquí" */}
+              {orden.tipo_orden === 1 && (
+                <div>
+                  <label className="block mb-2 font-medium">Mesa:</label>
+                  <select
+                    name="mesa_id"
+                    value={orden.mesa_id ? String(orden.mesa_id) : ''}
+                    onChange={(e) => setOrden({...orden, mesa_id: Number(e.target.value)})}
+                    className="w-full p-2 border rounded"
+                    required={orden.tipo_orden === 1}
+                  >
+                    <option value="">Seleccionar mesa</option>
+                    {mesasDisponibles.map(mesa => (
+                      <option key={mesa.mesa_id} value={String(mesa.mesa_id)}>
+                        Mesa {mesa.mesa_id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
+          </div>
 
             {/* Items seleccionados */}
             <div className="border-t pt-4">
