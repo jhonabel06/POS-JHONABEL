@@ -365,14 +365,15 @@ const handleSubmit = async (e) => {
 
       if (isEditing) {
         // Lógica de edición con nueva función
-        const updates = await supabase.rpc('actualizar_orden_completa', {
+        const updates = await supabase.rpc('actualizar_orden_completa', { 
           p_orden_id: ordenId,
           items: items.map(item => ({
             producto_id: item.producto_id,
             cantidad: item.cantidad,
             precio_unitario: item.precio_unitario
           })),
-          nueva_mesa_id: orden.mesa_id
+          nueva_mesa_id: orden.mesa_id,
+          nuevo_tipo_orden: orden.tipo_orden
         });        
         if (updates.error) throw updates.error;
         alert('¡Orden actualizada exitosamente!');
