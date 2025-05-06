@@ -3,16 +3,30 @@ import PropTypes from 'prop-types';
 import { Receipt } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
-const itbis = await supabase
+// const itbis = await supabase
+//   .from('configuracion_general')
+//   .select('itbis_porcentaje') 
+//   .single()
+//   .then(({ data }) => data.itbis_porcentaje) // Asignar el valor de itbis a una variable
+//   .catch((error) => { 
+//     console.error('Error al obtener el valor de itbis:', error);
+//     return 0; // Valor por defecto en caso de error
+//   }
+// );
+
+// Actualizar lista de productos
+const { data } = await supabase
   .from('configuracion_general')
-  .select('itbis_porcentaje') 
+  .select(`
+    itbis_porcentaje,
+    nombre_empresa
+  `)
   .single()
-  .then(({ data }) => data.itbis_porcentaje) // Asignar el valor de itbis a una variable
+  .then(({ data }) => data) // Asignar el valor de itbis a una variable
   .catch((error) => { 
     console.error('Error al obtener el valor de itbis:', error);
-    return 0; // Valor por defecto en caso de error
-  }
-);
+    return { itbis_porcentaje: 0, nombre_empresa: '' }; // Valor por defecto en caso de error
+  });
 
 const Invoice = forwardRef(({ order }, ref) => {
   const formatDate = (dateString) => {
@@ -33,7 +47,7 @@ const Invoice = forwardRef(({ order }, ref) => {
           <Receipt className="w-12 h-12 text-teal-600" />
         </div>
         <h1 className="text-2xl font-bold text-gray-800">Factura</h1>
-        <p className="text-gray-600">Restaurante Example</p>
+        <p className="text-gray-600">{data.nombre_empresa}</p>
       </div>
 
       {/* Información de la orden */}
@@ -81,7 +95,8 @@ const Invoice = forwardRef(({ order }, ref) => {
         <div className="border-t-2 border-gray-200 pt-4">
         <div className="flex justify-between items-center">
           <span className="text-lg">Itbis:</span>
-          <span className="text-lg">${(order.total.toFixed(2)*itbis)/100}</span>
+          <span className="text-lg">${(order.total.toFixed(2)*data.itbis_porcentaje)/100}</span>
+          
         </div>
       </div>
 
@@ -90,7 +105,7 @@ const Invoice = forwardRef(({ order }, ref) => {
           <span className="font-bold text-lg">Total:</span>
           <span className="font-bold text-lg">$
             {
-              parseFloat(order.total.toFixed(2)) + parseFloat((order.total.toFixed(2)*itbis)/100)
+              parseFloat(order.total.toFixed(2)) + parseFloat((order.total.toFixed(2)*data.itbis_porcentaje)/100)
             }</span>
         </div>
 
